@@ -59,6 +59,9 @@ final public class Usuario implements Forma {
 //    @Transient
     private String password2;
 
+    @NotNull
+    private boolean emailVerified;
+
     @JsonIgnore
 //    @Attribute(name="labeledURI")
     private String token;
@@ -78,12 +81,13 @@ final public class Usuario implements Forma {
         this.password = password;
     }
 
-    public Usuario(String username, String firstname, String middlename, String lastname, String email, String password, String password2) {
+    public Usuario(String username, String firstname, String middlename, String lastname, String email, boolean emailVerified, String password, String password2) {
         this.username = username;
         this.firstname = firstname;
         this.middlename = middlename;
         this.lastname = lastname;
         this.email = email;
+        this.emailVerified = emailVerified;
         this.password = password;
         this.password2 = password2;
     }
@@ -132,6 +136,14 @@ final public class Usuario implements Forma {
 
     public void setEmail(String email) {
         this.email = email;
+    }
+
+    public boolean isEmailVerified() {
+        return emailVerified;
+    }
+
+    public void setEmailVerified(boolean emailVerified) {
+        this.emailVerified = emailVerified;
     }
 
     public String getPassword() {

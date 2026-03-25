@@ -1,6 +1,8 @@
 package com.laetienda.kcUser.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.laetienda.model.kc.KcUser;
+import com.laetienda.model.user.Usuario;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -11,6 +13,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.env.Environment;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -208,5 +211,62 @@ class UserControllerTest {
         mvc.perform(get(address, "not-valid-user-id")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void createUser() throws Exception {
+
+        String address = env.getProperty("api.kcUser.uri.create");
+        assertNotNull(address);
+
+        String testUsername = env.getProperty("webapp.user.test.username");
+        assertNotNull(testUsername);
+
+        Usuario user = new Usuario(testUsername,
+                "Test", "User", "KcUser",
+                "test.kcuser@la-etienda.com", false,
+                "secretPassword", "secretPassword2");
+
+        //CREATE::BAD_REQUEST: Create user while passwords are different
+        mvc.perform(post(address)
+                        .with(jwt().authorities(new SimpleGrantedAuthority("role_service")))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .content(json.writeValueAsBytes(user)))
+                .andExpect(status().isBadRequest());
+
+        //CREATE::FORBIDDEN: Create user by using a username that already exists.
+        user.setPassword2(user.getPassword());
+        mvc.perform(post(address)
+                        .with(jwt().authorities(new SimpleGrantedAuthority("role_service")))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .content(json.writeValueAsBytes(user)))
+                .andExpect(status().isForbidden());
+
+        //CREATE::SUCCESS: Create new user.
+        user.setUsername("userKcCreateUserTest");
+        MvcResult response = mvc.perform(post(address)
+                        .with(jwt().authorities(new SimpleGrantedAuthority("role_service")))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .content(json.writeValueAsBytes(user)))
+                    .andExpect(status().isOk()).andReturn();
+        KcUser result = json.readValue(response.getResponse().getContentAsString(), KcUser.class);
+        assertNotNull(result.getId());
+
+        //DELETE::UNAUTHORIZED: Try to remove user by using a different user account.
+        address = env.getProperty("api.kcUser.uri.delete");
+        assertNotNull(address);
+
+        mvc.perform(delete(address, result.getId())
+                        .with(jwt()
+                                .jwt(jwt -> jwt.claim("sub", testUserId))))
+                .andExpect(status().isUnauthorized());
+
+        //DELETE::SUCCESS: Delete user.
+        mvc.perform(delete(address, result.getId())
+                        .with(jwt().jwt(jwt -> jwt.claim("sub", result.getId()))))
+                .andExpect(status().isNoContent());
     }
 }

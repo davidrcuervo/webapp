@@ -16,8 +16,14 @@ api:
       uri: ${api.kcUser}${api.kcUser.isUserIdValid.file}
     file:
       findEmailAddress: /findEmailAddress/{userId}
+      create: /create
+      delete: /delete/{userId}
     uri:
       findEmailAddress: ${api.kcUser}${api.kcUser.file.findEmailAddress}
+      create: ${api.kcUser}${api.kcUser.file.create}
+      delete: ${api.kcUser}${api.kcUser.file.delete}
+    path:
+      create: ${api.kcUser.folder}${api.kcUser.file.create}
   mail:
     url: http://etmail:${PORT_MESSENGER}
     folder: /api/v0/email
@@ -45,11 +51,27 @@ api:
       file: findByName/{name}
       uri: ${api.company.uri}/${api.company.findByName.file}
     update:
-      file: update
-      uri: ${api.company.uri}/${api.company.update.file}
+      file:
+        name: update/{companyId}/name/{value}
+        description: update/{companyId}/description
+#        memberPolicy: update/{companyId}/memberPolicy/{value}
+      uri:
+        name: ${api.company.uri}/${api.company.update.file.name}
+        description: ${api.company.uri}/${api.company.update.file.description}
+#        memberPolicy: ${api.company.uri}/${api.company.update.file.memberPolicy}
+
+#      file: update
+#      uri: ${api.company.uri}/${api.company.update.file}
     delete:
       file: delete/{id}
       uri: ${api.company.uri}/${api.company.delete.file}
+    manager:
+      file:
+        add: /{companyId}/manager/add/{userId}
+        remove: /{companyId}/manager/remove/{userId}
+      uri:
+        add: ${api.company.uri}${api.company.manager.file.add}
+        remove: ${api.company.uri}${api.company.manager.file.remove}
     member:
       find:
         file: member/find/{companyId}/{userId}

@@ -3,6 +3,8 @@ package com.laetienda.kcUser.controller;
 import com.laetienda.kcUser.service.KcUserService;
 import com.laetienda.lib.exception.NotValidCustomException;
 import com.laetienda.model.kc.KcUser;
+import com.laetienda.model.user.Usuario;
+import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -104,5 +106,18 @@ public class UserController {
         return ResponseEntity.ok(String.format(
                 "Successful authorization logging. $User: %s",
                 principal.getName()));
+    }
+
+    @PostMapping("${api.kcUser.file.create}") //api/v0/user/create
+    public ResponseEntity<KcUser> create (@Valid @RequestBody Usuario usuario) throws NotValidCustomException {
+        log.info("USER_CONTROLLER::create $user: {}", usuario.getUsername());
+        return ResponseEntity.ok(service.createUser(usuario));
+    }
+
+    @DeleteMapping("${api.kcUser.file.delete}") //api/v0/user/delete/{userId}
+    public ResponseEntity<Void> delete (@PathVariable String userId) throws NotValidCustomException {
+        log.info("USER_CONTROLLER::delete $userId: {}", userId);
+        service.deleteUser(userId);
+        return ResponseEntity.noContent().build();
     }
 }

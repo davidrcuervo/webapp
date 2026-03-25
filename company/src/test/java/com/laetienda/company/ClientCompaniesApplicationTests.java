@@ -60,8 +60,8 @@ class ClientCompaniesApplicationTests {
     @Value("${api.company.isValid.uri}")
     private String isCompanyValidUri; //api/v0/company/isValid/{companyId}
 
-    @Value("${api.company.update.uri}") //api/v0/company/update
-    private String updateCompanyAddress;
+//    @Value("${api.company.update.uri}") //api/v0/company/update
+//    private String updateCompanyAddress;
 
     @Value("${api.company.member.add.uri}")
     private String addMemberAddress;
@@ -104,8 +104,8 @@ class ClientCompaniesApplicationTests {
         comp = companyAddManager(comp);
         //TODO: modifyCompanyOwner
         //TODO: companyRemoveManager
-//        deleteMember(member);
-//        deleteCompany(comp);
+        deleteMember(member);
+        deleteCompany(comp);
 	}
 
     private Company create(Company company) throws Exception {
@@ -144,15 +144,40 @@ class ClientCompaniesApplicationTests {
 	}
 
     private Company updateCompany(Company company) throws Exception {
+
+        //UPDATE DESCRIPTION
         String description = "Description of the company has been added.";
+        String address = env.getProperty("api.company.update.uri.description");
+        assertNotNull(address);
+        assertNull(company.getDescription());
+
+//                company.setDescription(description);
+//        response = mvc.perform(put(updateCompanyAddress)
+//                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtTestUser)
+//                        .contentType(MediaType.APPLICATION_JSON)
+//                        .accept(MediaType.APPLICATION_JSON)
+//                        .content(json.writeValueAsBytes(company)))
+//                .andExpect(status().isOk())
+//                .andReturn();
+//        result = json.readValue(response.getResponse().getContentAsString(), Company.class);
+//        assertEquals(description, result.getDescription());
+
+        MvcResult response = mvc.perform(post(address, company.getId())
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtTestUser)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .accept(MediaType.APPLICATION_JSON)
+                    .content(description))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        Company result = json.readValue(response.getResponse().getContentAsString(), Company.class);
+        assertEquals(description, result.getDescription());
+
+        //CREATE COMPANY FOR TESTING UPDATES
         Company temp = new Company("updateCompany", CompanyMemberPolicy.PUBLIC);
         temp.setOwner(adminUserId);
-        assertNotNull(updateCompanyAddress);
 
-        assertNull(company.getDescription());
-        company.setDescription(description);
-
-        MvcResult response = mvc.perform(post(createAddress)
+        response = mvc.perform(post(createAddress)
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + getJwtAdminUser())
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON)
@@ -161,33 +186,29 @@ class ClientCompaniesApplicationTests {
                 .andReturn();
         temp = json.readValue(response.getResponse().getContentAsString(), Company.class);
 
-        response = mvc.perform(put(updateCompanyAddress)
-                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtTestUser)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .accept(MediaType.APPLICATION_JSON)
-                        .content(json.writeValueAsBytes(company)))
-                .andExpect(status().isOk())
-                .andReturn();
-        Company result = json.readValue(response.getResponse().getContentAsString(), Company.class);
-        assertEquals(description, result.getDescription());
+        //UPDATE COMPANY NAME
+//      company.setName(temp.getName());
+        address = env.getProperty("api.company.update.uri.name");
+        assertNotNull(address);
 
-        company.setName(temp.getName());
-        mvc.perform(put(updateCompanyAddress)
+        mvc.perform(put(address, company.getId(), temp.getName())
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtTestUser)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .accept(MediaType.APPLICATION_JSON)
-                        .content(json.writeValueAsBytes(company)))
+                        .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isForbidden());
 
         company.setName(result.getName());
-        company.setMemberPolicy(CompanyMemberPolicy.PUBLIC);
-        mvc.perform(put(updateCompanyAddress)
-                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtTestUser)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .accept(MediaType.APPLICATION_JSON)
-                        .content(json.writeValueAsBytes(company)))
-                .andExpect(status().isForbidden());
 
+        //UPDATE COMPANY MEMBER POLICY
+//      company.setMemberPolicy(CompanyMemberPolicy.PUBLIC);
+//        address = env.getProperty("api.company.update.uri.memberPolicy");
+//        assertNotNull(address);
+//
+//        mvc.perform(put(address, company.getId(), CompanyMemberPolicy.PUBLIC)
+//                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtTestUser)
+//                        .accept(MediaType.APPLICATION_JSON))
+//                .andExpect(status().isNotFound());
+
+        //DELETE TEMP COMPANY
         mvc.perform(delete(deleteAddress, temp.getId())
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + getJwtAdminUser())
                         .contentType(MediaType.APPLICATION_JSON)
@@ -425,16 +446,44 @@ class ClientCompaniesApplicationTests {
         return result;
     }
 
-    private Company companyAddManager(Company comp) {
+    private Company companyAddManager(Company comp) throws Exception {
+        String address = env.getProperty("api.company.manager.file.uri.add");
+        assertNotNull(address);
 
         assertFalse(comp.getEditors().contains(adminUserId));
 
-        //TODO -FAIL- try to add manager that is same owner
-        comp.addEditor(adminUserId);
+        //FORBIDDEN: Add manager that is same owner
+        mvc.perform(put(address, comp.getId(), testUserId)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtTestUser))
+                .andExpect(status().isForbidden());
 
-        //TODO -FAIL- add manager that is not authorized.
-        //TODO -.OK.- add manager by owner.
-        //TODO -.OK.- Block member by new manager
+        //UNAUTHORIZED: Add manager by user that is not manager
+        mvc.perform(put(address, comp.getId(), adminUserId)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + getJwtAdminUser()))
+                .andExpect(status().isUnauthorized());
+
+        //Add manager by owner.
+        MvcResult response = mvc.perform(put(address, comp.getId(), adminUserId)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtTestUser)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk()).andReturn();
+        Company result = json.readValue(response.getResponse().getContentAsString(), Company.class);
+        assertTrue(comp.getEditors().contains(adminUserId));
+
+        //FORBIDDEN: Block manager by new manager
+        response = mvc.perform(get(findMemberAddress, comp.getId(), testUserId)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtTestUser)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk()).andReturn();
+        Member member = json.readValue(response.getResponse().getContentAsString(), Member.class);
+
+        member.setStatus(CompanyMemberStatus.BLOCKED);
+        mvc.perform(post(updateMemberAddress)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + getJwtAdminUser())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json.writeValueAsString(member)))
+                .andExpect(status().isForbidden());
+
         //TODO -.OK.- add another manager by manager (requires extra user).
         //TODO -.OK.- unblock member by third manager
 

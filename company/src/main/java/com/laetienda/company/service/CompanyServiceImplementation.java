@@ -10,6 +10,8 @@ import com.laetienda.model.company.Friend;
 import com.laetienda.model.company.Member;
 import com.laetienda.utils.service.api.ApiSchema;
 import com.laetienda.utils.service.api.ApiUser;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validator;
 import jakarta.validation.constraints.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,7 +19,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -26,10 +27,15 @@ import java.util.Set;
 public class CompanyServiceImplementation implements CompanyService{
     private final static Logger log = LoggerFactory.getLogger(CompanyServiceImplementation.class);
 
+    private final Validator validator;
     @Autowired private CompanyRepository repo;
     @Autowired private ApiUser apiUser;
     @Autowired private ApiSchema apiSchema;
     @Autowired private FriendRepository repoFriend;
+
+    public CompanyServiceImplementation(Validator validator) {
+        this.validator = validator;
+    }
 
     @Override
     public Company create(@NotNull Company company) throws NotValidCustomException {
@@ -94,13 +100,13 @@ public class CompanyServiceImplementation implements CompanyService{
     }
 
     @Override
-    public Company deleteMember(String companyId, String userId) throws NotValidCustomException {
+    public void deleteMember(String companyId, String userId) throws NotValidCustomException {
         Long cid = isCompanyValid(companyId);
-        return deleteMember(cid, userId);
+        deleteMember(cid, userId);
     }
 
     @Override
-    public Company deleteMember(Long companyId, String userId) throws NotValidCustomException {
+    public void deleteMember(Long companyId, String userId) throws NotValidCustomException {
         log.debug("COMPANY_SERVICE::removeMember. $company: {} | $userId: {}", companyId, userId);
 
         Member member = findMemberByIds(companyId.toString(), userId);
@@ -109,7 +115,7 @@ public class CompanyServiceImplementation implements CompanyService{
             repoFriend.delete(f);
         }
 
-        return repo.removeMember(member);
+        repo.removeMember(member);
     }
 
     @Override
@@ -205,48 +211,95 @@ public class CompanyServiceImplementation implements CompanyService{
     }
 
     @Override
-    public Company updateCompany(Company company) throws NotValidCustomException {
-        log.debug("COMPANY_SERVICE::updateCompany. $company: {}", company.getName());
+    public Company updateName(String companyId, String value) throws NotValidCustomException {
+        log.debug("COMPANY_SERVICE::updateName. $companyId: {} | $value: {}", companyId, value);
 
-        Company temp = apiSchema.findById(Company.class, company.getId()).getBody();
-
-        if(temp == null){
-            String message = String.format("Company does not exist or it can't be modified by current user. $companyId: %d", company.getId());
-            log.warn(message);
-            throw new NotValidCustomException(message, HttpStatus.BAD_REQUEST, "company");
-        }
-
-        //if the name is different check that new name is valid
-        if(!temp.getName().equals(company.getName()) && !isCompanyNameValid(company)){
-            String message = String.format("Company name has been modified but new name is not valid. $companyName: %s", company.getName());
+        if(!isCompanyNameValid(value)) {
+            String message = String.format("Company name has been modified but new name is not valid. $companyName: %s", value);
             log.warn(message);
             throw new NotValidCustomException(message, HttpStatus.FORBIDDEN, "company");
         }
 
-        //it is forbidden to modify company member policy
-        if(!temp.getMemberPolicy().equals(company.getMemberPolicy())){
-            String message = String.format("Company member policy can't be modified. $companyMemberPolicy: %s", company.getMemberPolicy().toString());
-            log.warn(message);
-            throw new NotValidCustomException(message, HttpStatus.FORBIDDEN, "company");
-        }
+        Long cid = isCompanyValid(companyId);
+        Company temp = repo.find(cid);
+        temp.setName(value);
 
-        if(new HashSet<String>(company.getEditors()).containsAll(temp.getEditors())
-                || new HashSet<String>(temp.getEditors()).containsAll(company.getEditors())){
-            companyAddManager(temp, company);
-        }
-
-        if(!temp.getOwner().equals(company.getOwner())){
-            modifyCompanyOwner(temp, company);
-        }
-
-        return repo.updateCompany(company);
+        return repo.updateCompany(temp);
     }
 
-    private Boolean isCompanyNameValid(Company company) throws NotValidCustomException{
-        log.debug("COMPANY_SERVICE::isCompanyNameValid. $company: {}", company.getName());
+//    @Override
+//    public Company updateMemberPolicy(String companyId, String value) throws NotValidCustomException {
+//        log.debug("COMPANY_SERVICE::updateMemberPolicy. $companyId: {} | $value: {}", companyId, value);
+//        Long cid = isCompanyValid(companyId);
+//        Company temp = repo.find(cid);
+//        return null;
+//    }
+
+    @Override
+    public Company updateDescription(String companyId, String value) throws NotValidCustomException {
+        log.debug("COMPANY_SERVICE::updateDescription. $companyId: {} | $value: {}", companyId, value);
+        Long cid = isCompanyValid(companyId);
+        Company temp = repo.find(cid);
+        temp.setDescription(value);
+
+        Set<ConstraintViolation<Company>> violations = validator.validate(temp);
+        if (!violations.isEmpty()) {
+            StringBuilder message = new StringBuilder();
+
+            for(ConstraintViolation<Company> violation : violations) {
+                message.append(violation.getMessage()).append(", ");
+                log.warn(violation.getMessage());
+            }
+
+            throw new  NotValidCustomException(message.toString(), HttpStatus.BAD_REQUEST, "company");
+        }
+
+        return repo.updateCompany(temp);
+    }
+
+//    @Override
+//    public Company updateCompany(Company company) throws NotValidCustomException {
+//        log.debug("COMPANY_SERVICE::updateCompany. $company: {}", company.getName());
+//
+//        Company temp = apiSchema.findById(Company.class, company.getId()).getBody();
+//
+//        if(temp == null){
+//            String message = String.format("Company does not exist or it can't be modified by current user. $companyId: %d", company.getId());
+//            log.warn(message);
+//            throw new NotValidCustomException(message, HttpStatus.BAD_REQUEST, "company");
+//        }
+//
+//        //if the name is different check that new name is valid
+//        if(!temp.getName().equals(company.getName()) && !isCompanyNameValid(company)){
+//            String message = String.format("Company name has been modified but new name is not valid. $companyName: %s", company.getName());
+//            log.warn(message);
+//            throw new NotValidCustomException(message, HttpStatus.FORBIDDEN, "company");
+//        }
+//
+//        //it is forbidden to modify company member policy
+//        if(!temp.getMemberPolicy().equals(company.getMemberPolicy())){
+//            String message = String.format("Company member policy can't be modified. $companyMemberPolicy: %s", company.getMemberPolicy().toString());
+//            log.warn(message);
+//            throw new NotValidCustomException(message, HttpStatus.FORBIDDEN, "company");
+//        }
+//
+//        if(new HashSet<String>(company.getEditors()).containsAll(temp.getEditors())
+//                || new HashSet<String>(temp.getEditors()).containsAll(company.getEditors())){
+//            companyAddManager(temp, company);
+//        }
+//
+//        if(!temp.getOwner().equals(company.getOwner())){
+//            modifyCompanyOwner(temp, company);
+//        }
+//
+//        return repo.updateCompany(company);
+//    }
+
+    private Boolean isCompanyNameValid(String value) throws NotValidCustomException{
+        log.debug("COMPANY_SERVICE::isCompanyNameValid. $companyName: {}", value);
 
         try{
-            Company temp = repo.findByNameNoJwt(company.getName());
+            Company temp = repo.findByNameNoJwt(value);
             return false;
         }catch(NotValidCustomException e){
             if(e.getStatus().equals(HttpStatus.NOT_FOUND)){

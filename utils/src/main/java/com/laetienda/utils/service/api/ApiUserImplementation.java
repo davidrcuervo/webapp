@@ -60,7 +60,7 @@ public class ApiUserImplementation implements ApiUser{
 
     @Override
     public String getToken(String username, String password) throws NotValidCustomException {
-        String address = env.getProperty("api.kcUser.token.uri", "/toke");
+        String address = env.getProperty("api.kcUser.token.uri", "/token");
         log.debug("USER_API::getToken. $username: {} | $address: {}", username, address);
 
         MultiValueMap<String, String> creds = new LinkedMultiValueMap<>();

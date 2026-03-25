@@ -85,7 +85,7 @@ EOF
 #add view-role to user client in order to microservice be able to find user info
 CLIENT_ID=$(kcadm.sh get clients -r etrealm -q clientId="$KC_USER_CLIENT_ID" -F id --format csv --noquotes)
 SERVICE_USER_USERNAME=$(kcadm.sh get clients/"$CLIENT_ID"/service-account-user -r etrealm -F username --format csv --noquotes)
-kcadm.sh add-roles -r etrealm --uusername "$SERVICE_USER_USERNAME" --cclientid realm-management --rolename view-users
+kcadm.sh add-roles -r etrealm --uusername "$SERVICE_USER_USERNAME" --cclientid realm-management --rolename view-users,manage-users
 
 #create client for webapp microservices
 echo "Create webapp client"
@@ -108,6 +108,7 @@ kcadm.sh add-roles -r etrealm --uusername "$SERVICE_USER_USERNAME" --cclientid r
 #create realm-roles
 echo "create role role_manager"
 kcadm.sh create roles -r etrealm -s name=role_manager -s 'description=Manager of the application.'
+kcadm.sh create roles -r etrealm -s name=role_service -s 'description=Application service.'
 
 #create users
 echo "create webapp admin user"

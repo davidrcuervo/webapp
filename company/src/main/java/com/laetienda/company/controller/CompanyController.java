@@ -42,11 +42,29 @@ public class CompanyController {
         return ResponseEntity.ok(service.findByName(name));
     }
 
-    @PutMapping("${api.company.update.file}") //api/v0/company/update
-    public ResponseEntity<Company> update(@RequestBody @Valid Company company) throws NotValidCustomException {
-        log.info("COMPANY_CONTROLLER::update. $company: {}", company.getName());
-        return ResponseEntity.ok(service.updateCompany(company));
+    @PutMapping("${api.company.update.file.name}") //api/v0/company/update/{companyId}/name/{value}
+    public ResponseEntity<Company> updateName(@PathVariable String companyId, @PathVariable String value) throws NotValidCustomException {
+        log.info("COMPANY_CONTROLLER::updateName. $companyId: {} | $value: {}", companyId, value);
+        return ResponseEntity.ok(service.updateName(companyId, value));
     }
+
+    @PostMapping("${api.company.update.file.description}") //api/v0/company/update/{companyId}/description
+    public ResponseEntity<Company> updateMemberPolicy(@PathVariable String companyId, @RequestBody String description) throws NotValidCustomException {
+        log.info("COMPANY_CONTROLLER::updateDescription. $companyId: {} | $description: {}", companyId, description);
+        return ResponseEntity.ok(service.updateDescription(companyId, description));
+    }
+
+//    @PostMapping("${api.company.update.file.memberPolicy}") //api/v0/company/update/{companyId}/description
+//    public ResponseEntity<Company> updateDescription(@PathVariable String companyId, @RequestBody String value) throws NotValidCustomException {
+//        log.info("COMPANY_CONTROLLER::updateMemberPolicy. $companyId: {} | $value: {}", companyId, value);
+//        return ResponseEntity.ok(service.updateMemberPolicy(companyId, value));
+//    }
+
+//    @PutMapping("${api.company.update.file}") //api/v0/company/update
+//    public ResponseEntity<Company> update(@RequestBody @Valid Company company) throws NotValidCustomException {
+//        log.info("COMPANY_CONTROLLER::update. $company: {}", company.getName());
+//        return ResponseEntity.ok(service.updateCompany(company));
+//    }
 
     @DeleteMapping("${api.company.delete.file}") //api/v0/company/delete/{id}
     public ResponseEntity<Void> delete(@PathVariable String id) throws NotValidCustomException {
