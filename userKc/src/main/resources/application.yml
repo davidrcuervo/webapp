@@ -1,0 +1,24 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name:Keycloak User Manager
+  security:
+    oauth2:
+      client:
+        registration:
+          etuser:
+            provider: keycloaket
+            authorization-grant-type: client_credentials
+            client-id: ${KC_USER_CLIENT_ID}
+            client-secret: ${KC_USER_CLIENT_ENC_PASSWORD}
+            scope: openid,profile
+        provider:
+          keycloaket:
+            issuer-uri: ${api.kc}
+            user-name-attribute: preferred_username
+
+kc:
+  client-registration-id:
+    etuser: etuser

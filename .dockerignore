@@ -1,5 +1,6 @@
 .git
 .gitignore
+API/target
 company/target
 frontend/target
 library/target

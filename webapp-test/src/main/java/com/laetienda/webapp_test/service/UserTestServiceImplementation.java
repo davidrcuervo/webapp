@@ -156,7 +156,7 @@ public class UserTestServiceImplementation implements UserTestService {
         Usuario user = new Usuario(
                 "sessionTestUser",
                 "Session",null,"Test User",
-                "sessionTestUser@mail.com",
+                "sessionTestUser@mail.com", false,
                 "secretpassword", "secretpassword"
         );
 

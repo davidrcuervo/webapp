@@ -67,7 +67,7 @@ $APP_ROOT_FOLDER/docker/.env
 * Test and Run
 ** Run Junit test
 #+BEGIN_SRC intellij
-  -ea -Djasypt.encryptor.password=secret -Dspring.config.additional-location=C:\Users\I849921\IdeaProjects\spring\API\,C:\Users\I849921\IdeaProjects\spring\
+  -ea -Djasypt.encryptor.password=secret -Dspring.config.additional-location=C:\Users\I849921\webapp\API\src\main\resources\,C:\Users\I849921\webapp\
 #+END_SRC
 ** Run
 #+BEGIN_SRC shell

@@ -13,4 +13,5 @@ public interface KcUserRepository {
     KcToken getToken(MultiValueMap<String, String> creds);
     List<KcUser> findByUsername(String username);
     KcUser findByUserId(String userId) throws HttpStatusCodeException;
+    void modify(String userId, Map<String, Object> content) throws HttpStatusCodeException;
 }

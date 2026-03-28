@@ -86,7 +86,7 @@ public class SchemaModuleImplementation implements SchemaModule {
         Usuario user = new Usuario(
                 "schemaAddReader",
                 "Add","Reader","Schema Test",
-                "schemaAddReader@mail.com",
+                "schemaAddReader@mail.com", false,
                 "secretpassword","secretpassword"
         );
         user = userTest.create(user).getBody();
@@ -128,7 +128,7 @@ public class SchemaModuleImplementation implements SchemaModule {
         Usuario user = new Usuario(
                 "schemaAddEditor",
                 "Add","Editor","Schema Test",
-                "schemaEditorReader@mail.com",
+                "schemaEditorReader@mail.com", false,
                 "secretpassword","secretpassword"
         );
         ItemTypeA item = new ItemTypeA("schemaAddEditor", 22, "Calle 70B # 87B - 24");
@@ -175,7 +175,7 @@ public class SchemaModuleImplementation implements SchemaModule {
         Usuario user = new Usuario(
                 "schemaRemoveReader",
                 "Remove","Reader","Schema Test",
-                "schemaRemoveReader@mail.com",
+                "schemaRemoveReader@mail.com", false,
                 "secretpassword","secretpassword"
         );
 

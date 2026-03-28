@@ -30,11 +30,12 @@ public class KcUserSecurity {
             authorize
                     .requestMatchers(env.getProperty("api.usuario.test.path")).permitAll()
                     .requestMatchers(env.getProperty("api.kcUser.token.path")).permitAll() //api/v0/user/token
-                    .requestMatchers(env.getProperty("api.kcUser.path.create")).hasAuthority("role_service")
                     .requestMatchers(actuatorPath).permitAll() //actuator/*
-//                    requestMatchers(env.getProperty("api.usuario.login.path")).permitAll().
+                    .requestMatchers(env.getProperty("api.kcUser.path.find")).fullyAuthenticated()
+                    .requestMatchers(env.getProperty("api.kcUser.path.login")).fullyAuthenticated()
+                    .requestMatchers(env.getProperty("api.kcUser.path.delete")).fullyAuthenticated()
                     .requestMatchers(env.getProperty("api.usuario.testAuthorization.path")).hasAuthority("role_manager")
-                    .anyRequest().fullyAuthenticated();
+                    .anyRequest().hasAuthority("role_service");
         });
 
         http.oauth2ResourceServer((oath2) -> {

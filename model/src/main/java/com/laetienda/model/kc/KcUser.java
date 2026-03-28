@@ -15,6 +15,7 @@ public class KcUser {
     private boolean emailVerified;
     private String firstName;
     private String lastName;
+    private boolean enabled;
 
     public boolean isEmailVerified() {
         return emailVerified;
@@ -62,6 +63,14 @@ public class KcUser {
 
     public void setLastName(String lastName) {
         this.lastName = lastName;
+    }
+
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
     }
 
     @JsonIgnore

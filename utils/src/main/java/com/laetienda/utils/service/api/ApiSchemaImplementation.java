@@ -28,7 +28,7 @@ public class ApiSchemaImplementation implements ApiSchema{
     @Autowired private Environment env;
     @Autowired private ObjectMapper json;
 
-    @Value("${kc.client-id}")
+    @Value("${kc.client-registration-id.webapp}")
     private String webappClientId;
 
     public ApiSchemaImplementation(RestClient restClient){

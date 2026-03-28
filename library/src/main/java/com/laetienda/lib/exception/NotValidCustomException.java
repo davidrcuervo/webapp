@@ -100,6 +100,17 @@ public class NotValidCustomException extends Exception{
         mistake.add(key, message);
     }
 
+    public HttpStatusCodeException getHttpStatusCodeException(){
+        if(status.is4xxClientError()){
+            return new HttpClientErrorException(status, getMessage());
+
+        } else if(status.is4xxClientError()){
+            return new HttpServerErrorException(status, getMessage());
+        } else{
+            return new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR, getMessage());
+        }
+    }
+
     public Mistake getMistake(){
         return mistake;
     }

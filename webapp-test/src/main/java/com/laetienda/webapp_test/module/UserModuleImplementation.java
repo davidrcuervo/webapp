@@ -219,7 +219,7 @@ public void setPort(int port){
                 "test",
                 "find",
                 "By Role Manager",
-                "testFindByUsernameRoleManager@testmail.com",
+                "testFindByUsernameRoleManager@testmail.com", false,
                 "secretpassword",
                 "secretpassword");
 
@@ -488,7 +488,7 @@ public void setPort(int port){
         Usuario user1 = new Usuario(
                 "testDeleteFirstUser",
                 "First", "User", "Test Delete",
-                "testDeleteFirstUser@mail.com",
+                "testDeleteFirstUser@mail.com", false,
                 "secretpassword", "secretpassword"
         );
         create(user1);
@@ -497,7 +497,7 @@ public void setPort(int port){
         Usuario user2 = new Usuario(
                 "testDeleteSecondUser",
                 "Second", "User", "Test Delete",
-                "testDeleteSecondUser@mail.com",
+                "testDeleteSecondUser@mail.com", false,
                 "secretpassword", "secretpassword"
         );
         create(user2);
@@ -640,7 +640,7 @@ public void setPort(int port){
                 "Create",
                 "Usuario",
                 "Api Test",
-                "testapicreate@testmail.com",
+                "testapicreate@testmail.com", false,
                 "secretpassword",
                 "secretpassword");
 
@@ -714,7 +714,7 @@ public void setPort(int port){
         Usuario user = new Usuario(
                 "testCreateWithAuthenticatedUser",
                 "Create","Withauthenticateduser","User Test",
-                "testCreateWithAuthenticatedUser@mail.com",
+                "testCreateWithAuthenticatedUser@mail.com", false,
                 "secretpassword","secretpassword"
         );
 
@@ -737,7 +737,7 @@ public void setPort(int port){
         Usuario user = new Usuario(
                 "testLogin",
                 "Login",null,"User Test",
-                "testLogin@email.com",
+                "testLogin@email.com", false,
                 "secretpassword", "secretpassword"
         );
 

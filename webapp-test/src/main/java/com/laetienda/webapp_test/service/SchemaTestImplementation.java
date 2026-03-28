@@ -210,7 +210,7 @@ public class SchemaTestImplementation implements SchemaTest {
     }
 
     @Override
-    public <T> ResponseEntity<String> deleteById(Class<T> clazz, Long id) throws HttpClientErrorException {
+    public <T> ResponseEntity<String> deleteById(Class<T> clazz, Long id) throws NotValidCustomException {
         log.debug("SCHEMA_TEST::deleteById. $class: {}, $id: {}", clazz.getName(), id);
         ResponseEntity<String> response = apiSchema.deleteById(clazz, id);
 
@@ -226,7 +226,7 @@ public class SchemaTestImplementation implements SchemaTest {
     }
 
     @Override
-    public <T> ResponseEntity<T> update(Class<T> clazz, DbItem item) throws HttpClientErrorException {
+    public <T> ResponseEntity<T> update(Class<T> clazz, DbItem item) throws NotValidCustomException {
         log.debug("SCHEMA_TEST::update $clazzName: {}", clazz.getName());
 
         ResponseEntity<T> response = apiSchema.update(clazz, item);

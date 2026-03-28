@@ -67,13 +67,13 @@ public void setPort(int port){
         Usuario user = new Usuario(
                 "testGroupCycle",
                 "Cycle",null,"Test Group",
-                "testGroupCycle@mail.com",
+                "testGroupCycle@mail.com", false,
                 "secretpassword","secretpassword");
 
         Usuario member = new Usuario(
                 "memberOfTestGroupCycle",
                 "Member","Cycle","Test Group",
-                "memberOfTestGroupCycle@mail.com",
+                "memberOfTestGroupCycle@mail.com", false,
                 "secretpassword","secretpassword");
 
         ResponseEntity<Usuario> response = userTest.create(user);
@@ -126,7 +126,7 @@ public void setPort(int port){
         Usuario owner = new Usuario(
                 "ownerOfTestGroupCycle",
                 "Owner","Cycle","Test Group",
-                "OwnerOfTestGroupCycle@mail.com",
+                "OwnerOfTestGroupCycle@mail.com", false,
                 "secretpassword","secretpassword");
 
         ResponseEntity<Usuario> response = userTest.create(owner);
@@ -175,7 +175,7 @@ public void setPort(int port){
         Usuario user = new Usuario(
                 "testFindAllManagerGroups",
                 "Find","All","Group Test",
-                "testFindAllManagerGroups@email.com",
+                "testFindAllManagerGroups@email.com", false,
                 "secretpassword","secretpassword"
         );
 
@@ -209,7 +209,7 @@ public void setPort(int port){
         Usuario user = new Usuario(
                 "testFindAllByManager",
                 "Findall","Bymanager","Group Test",
-                "testFindAllByManager@mail.com",
+                "testFindAllByManager@mail.com", false,
                 "secretpassword","secretpassword"
         );
         ResponseEntity<Usuario> resp = userTest.create(user);
@@ -244,7 +244,7 @@ public void setPort(int port){
         Usuario user = new Usuario(
                 "testFindByNameUnauthorized",
                 "Find","Unauthroized","Group Test",
-                "testFindByNameUnauthorized@mail.com",
+                "testFindByNameUnauthorized@mail.com", false,
                 "secretpassword", "secretpassword"
         );
         ResponseEntity<Usuario> resp1 = userTest.create(user);
@@ -289,7 +289,7 @@ public void setPort(int port){
         Usuario user = new Usuario(
                 "testCreateGroupWithInvalidMember",
                 "Invalid","Member","Test Group",
-                "testCreateGroupWithInvalidMember@mail.com",
+                "testCreateGroupWithInvalidMember@mail.com", false,
                 "secretpassword","secretpassword"
         );
         userTest.create(user);
@@ -333,7 +333,7 @@ public void setPort(int port){
         Usuario user = new Usuario(
                 "testRemoveInvalidGroup",
                 "Remove","InvalidGroup","Group Test",
-                "testRemoveInvalidGroup@mail.com",
+                "testRemoveInvalidGroup@mail.com", false,
                 "secretpassword","secretpassword"
         );
         ResponseEntity<Usuario> resp1 = userTest.create(user);
@@ -360,7 +360,7 @@ public void setPort(int port){
         Usuario user = new Usuario(
                 "testFindAllByMember",
                 "Test","FindAllByMember","Group Test",
-                "testFindAllByMember@mail.com",
+                "testFindAllByMember@mail.com", false,
                 "secretpassword", "secretpassword"
         );
 
@@ -382,7 +382,7 @@ public void setPort(int port){
         Usuario member = new Usuario(
                 "createGroupWithMembers",
                 "Create","WithMemebers","Group Test",
-                "createGroupWithMembers@mail.com",
+                "createGroupWithMembers@mail.com", false,
                 "secretpassword","secretpassword");
         userTest.create(member);
 

@@ -27,10 +27,7 @@ import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.HttpStatusCodeException;
 
 import java.security.NoSuchAlgorithmException;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Service
 public class KcUserServiceImplementation implements KcUserService{
@@ -80,6 +77,13 @@ public class KcUserServiceImplementation implements KcUserService{
     }
 
     @Override
+    public Boolean userIdExists(String userId) throws HttpStatusCodeException {
+        log.debug("USER_SERVICE::userIdExists. $userId: {}", userId);
+        KcUser result = repo.findByUserId(userId);
+        return true;
+    }
+
+    @Override
     public String getEmailAddress(String userId) throws HttpStatusCodeException {
         log.debug("USER_SERVICE::getEmailAddress. $userId: {}", userId);
         return repo.findByUserId(userId).getEmail();
@@ -105,20 +109,26 @@ public class KcUserServiceImplementation implements KcUserService{
         return result.getFirst();
     }
 
-    private boolean isUserValid(KcUser user) throws NotValidCustomException{
+    private boolean isUserValid(KcUser user) throws HttpStatusCodeException {
         log.trace("USER_SERVICE::isUserValid");
         boolean result = true;
 
         if(user == null){
             String message = "Username or user id does not exist";
-            log.info(message);
-            throw new NotValidCustomException(message, HttpStatus.NOT_FOUND, "user");
+            log.info("USER_SERVICE::isUserValid. {}", message);
+            throw new HttpClientErrorException(HttpStatus.NOT_FOUND, message);
+        }
+
+        if(!user.isEnabled()){
+            String message = String.format("User, %s, is not enabled", user.getId());
+            log.info("USER_SERVICE::isUserValid. {}", message);
+            throw new HttpClientErrorException(HttpStatus.BAD_REQUEST, message);
         }
 
         if(!user.isEmailVerified() || user.getEmail() == null || user.getEmail().isBlank()){
             String message = String.format("Username, %s, does not have a verified email address", user.getUsername());
-            log.error(message);
-            throw new NotValidCustomException(message, HttpStatus.BAD_REQUEST, "username");
+            log.error("USER_SERVICE::isUserValid. {}", message);
+            throw new HttpClientErrorException(HttpStatus.BAD_REQUEST, message);
         }
 
         return result;
@@ -134,29 +144,43 @@ public class KcUserServiceImplementation implements KcUserService{
             throw new NotValidCustomException(message, HttpStatus.BAD_REQUEST, "password");
         }
 
-        try{
-            findByUsername(user.getUsername());
-            String message  = String.format("Username, %s, already exists.", user.getUsername());
-            log.warn(message);
-            throw new NotValidCustomException(message, HttpStatus.FORBIDDEN, "username");
+        List<KcUser> temp = repo.findByUsername(user.getUsername());
+        if(temp == null || temp.isEmpty() || temp.size() == 0){
+            UserRepresentation userRepresentation = getUserRepresentation(user);
 
-        }catch(NotValidCustomException e){
-            if(e.getStatus().equals(HttpStatus.NOT_FOUND)){
-                UserRepresentation userRepresentation = getUserRepresentation(user);
+            try (Response resp = keycloak.realm(realm).users().create(userRepresentation)) {
 
-                try (Response resp = keycloak.realm(realm).users().create(userRepresentation)) {
-
-                    if (resp.getStatus() != HttpStatus.CREATED.value()) {
-                        String message = resp.getEntity().toString();
-                        log.error("USER_SERVICE::createUser. Failed to save user in Keycloak. $code: {} - $error: {}", resp.getStatus(), message);
-                        throw new NotValidCustomException(message, HttpStatus.valueOf(resp.getStatus()), "user");
-                    }
-
-                    return repo.findByUsername(user.getUsername()).getFirst();
+                if (resp.getStatus() != HttpStatus.CREATED.value()) {
+                    String message = resp.getEntity().toString();
+                    log.error("USER_SERVICE::createUser. Failed to save user in Keycloak. $code: {} - $error: {}", resp.getStatus(), message);
+                    throw new NotValidCustomException(message, HttpStatus.valueOf(resp.getStatus()), "user");
                 }
+
+                return repo.findByUsername(user.getUsername()).getFirst();
             }
-            throw e;
+
+        }else {
+            String message = String.format("Username, %s, already exists.", user.getUsername());
+            log.warn("USER_SERVICE::createUser. {}", message);
+            throw new NotValidCustomException(message, HttpStatus.FORBIDDEN, "username");
         }
+    }
+
+    @Override
+    public KcUser enable(String userId) throws HttpStatusCodeException {
+        Map<String, Object> content = new HashMap<>();
+        content.put("enabled", true);
+        content.put("emailVerified", true);
+
+        repo.modify(userId, content);
+
+        return findById(userId);
+    }
+
+    private KcUser findById(String userId) throws HttpStatusCodeException {
+
+        KcUser result = repo.findByUserId(userId);
+        return isUserValid(result) ? result : null;
     }
 
     private UserRepresentation getUserRepresentation(Usuario user) {

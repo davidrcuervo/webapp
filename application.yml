@@ -4,13 +4,13 @@ webapp:
     admin:
       username: ${APP_USER_ADMIN_USERNAME}
       password: ${APP_USER_ADMIN_ENC_PASSWORD}
-      userId: b99bfdb4-a347-4636-9b44-8d002d9d9dca
+      userId: 1cc9ad0b-f284-40d0-a25b-b13afa8c6a2b
     test:
       username: ${APP_USER_TEST_USERNAME}
       password: ${APP_USER_TEST_ENC_PASSWORD}
-      userId: e7385768-ed20-4b59-8b20-e4a2d84a6f91
+      userId: 708daaef-dfb2-4d4e-b9b6-c9fdc8c4aefe
     service:
-      userId: 748fe5ba-a79e-4847-86b5-f74585258900
+      userId: a9bc5867-4461-4f24-9508-993558710144
   messenger:
     enable: true
 
@@ -23,6 +23,7 @@ logging:
     org:
       springframework:
         security: DEBUG
+
 #ACTUATORS
 management:
   endpoints:
@@ -61,7 +62,8 @@ kc:
     client:
       id: ${KC_USER_CLIENT_ID}
       password: ${KC_USER_CLIENT_ENC_PASSWORD}
-  client-id: webapp
+  client-registration-id:
+    webapp: webapp
 
 #Session authentication
 #spring.datasource.driver-class-name=org.postgresql.Driver

@@ -12,12 +12,11 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Repository;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
-import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestClient;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.springframework.security.oauth2.client.web.client.RequestAttributeClientRegistrationIdResolver.clientRegistrationId;
 
@@ -28,8 +27,8 @@ public class KcUserRepositoryImplementation implements KcUserRepository {
     final private RestClient client;
     @Autowired private Environment env;
 
-    @Value("${kc.client-id}")
-    private String clientId;
+    @Value("${kc.client-registration-id.etuser}")
+    private String clientRegistrationId;
 
     KcUserRepositoryImplementation(RestClient restClient){
         this.client = restClient;
@@ -72,11 +71,11 @@ public class KcUserRepositoryImplementation implements KcUserRepository {
     @Override
     public List<KcUser> findByUsername(String username) {
         String address = env.getProperty("api.kc.admin.user.byUsername", "/admin/master/users");
-        log.debug("USER_REPOSITORY::findByUsername. $username: {} | clientId: {} | $address: {}", username, clientId, address);
+        log.debug("USER_REPOSITORY::findByUsername. $username: {} | clientId: {} | $address: {}", username, clientRegistrationId, address);
 
         List<KcUser> result = client.get().uri(address, username)
                 .accept(MediaType.APPLICATION_JSON)
-                .attributes(clientRegistrationId(clientId))
+                .attributes(clientRegistrationId(clientRegistrationId))
                 .retrieve()
                 .body(new ParameterizedTypeReference<List<KcUser>>() {});
         log.trace("USER_REPOSITORY::isValidUser. $result: {}", result != null && result.isEmpty() ? "null" : result.getFirst().getFullName());
@@ -86,11 +85,23 @@ public class KcUserRepositoryImplementation implements KcUserRepository {
     @Override
     public KcUser findByUserId(String userId) throws HttpStatusCodeException {
         String address = env.getProperty("api.kc.admin.user.byUserId", "/admin/master/users/{userId}");
-        log.debug("USER_REPOSITORY::findByUserId $userId: {} | $clientId: {} | $address: {}", userId, clientId, address);
+        log.debug("USER_REPOSITORY::findByUserId $userId: {} | $clientId: {} | $address: {}", userId, clientRegistrationId, address);
 
         return client.get().uri(address, userId)
                 .accept(MediaType.APPLICATION_JSON)
-                .attributes(clientRegistrationId(clientId))
+                .attributes(clientRegistrationId(clientRegistrationId))
                 .retrieve().toEntity(KcUser.class).getBody();
+    }
+
+    @Override
+    public void modify(String userId, Map<String, Object> content) throws HttpStatusCodeException {
+        String address = env.getProperty("api.kc.admin.user.byUserId", "/admin/master/users/{userId}");
+        log.debug("USER_REPOSITORY::modify. $userId: {} | $address: {}", userId, address);
+
+        client.put().uri(address, userId)
+                .attributes(clientRegistrationId(clientRegistrationId))
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(content)
+                .retrieve().toBodilessEntity();
     }
 }

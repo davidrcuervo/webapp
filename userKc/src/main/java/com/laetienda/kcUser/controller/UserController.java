@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
@@ -48,6 +49,13 @@ public class UserController {
     public ResponseEntity<String> isUserIdValid(@PathVariable String userId) throws NotValidCustomException {
         log.info("USER_CONTROLLER::isUserIdValid. $userId: {}", userId);
         return ResponseEntity.ok(service.isUserIdValid(userId));
+    }
+
+    @GetMapping("${api.kcUser.file.userIdExists}") //api/v0/user/exist/{userId}
+    public ResponseEntity<Void> userExists(@PathVariable String userId) throws HttpStatusCodeException {
+        log.info("USER_CONTROLLER::userExists. $userId: {}", userId);
+        service.userIdExists(userId);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("${api.usuario.test.file}") //api/v0/user/test.html
@@ -112,6 +120,12 @@ public class UserController {
     public ResponseEntity<KcUser> create (@Valid @RequestBody Usuario usuario) throws NotValidCustomException {
         log.info("USER_CONTROLLER::create $user: {}", usuario.getUsername());
         return ResponseEntity.ok(service.createUser(usuario));
+    }
+
+    @PutMapping("${api.kcUser.file.enable}") //api/v0/user/enable/{userId}
+    public ResponseEntity<KcUser> enable(@PathVariable String userId) throws HttpStatusCodeException {
+        log.info("USER_CONTROLLER::enable. $userId: {}", userId);
+        return ResponseEntity.status(HttpStatus.CREATED).body(service.enable(userId));
     }
 
     @DeleteMapping("${api.kcUser.file.delete}") //api/v0/user/delete/{userId}

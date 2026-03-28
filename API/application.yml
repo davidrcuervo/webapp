@@ -5,25 +5,47 @@ api:
         byUsername: ${api.kc.admin}/users?username={username}&exact=true
         byUserId: ${api.kc.admin}/users/{userId}
   kcUser:
+    server: http://etuser:${PORT_USUARIO}
+    folder: /api/v0/user
+    find:
+      file: find
+      uri: ${api.kcUser.uri.folder}/${api.kcUser.find.file}
+    token:
+      file: token
+      uri: ${api.kcUser.uri.folder}/${api.kcUser.token.file}
+      path: ${api.kcUser.folder}/${api.kcUser.token.file}
+    actuator:
+      path: /actuator
+      uri: ${api.kcUser.server}${api.kcUser.actuator.path}
+      health:
+        file: health
+        uri: ${api.kcUser.actuator.uri}/${api.kcUser.actuator.health.file}
     login:
       file: login
-      uri: ${api.kcUser}/${api.kcUser.login.file}
+      uri: ${api.kcUser.uri.folder}/${api.kcUser.login.file}
     isUsernameValid:
       file: /isUsernameValid/{username}
-      uri: ${api.kcUser}${api.kcUser.isUsernameValid.file}
+      uri: ${api.kcUser.uri.folder}${api.kcUser.isUsernameValid.file}
     isUserIdValid:
       file: /isUserIdValid/{userId}
-      uri: ${api.kcUser}${api.kcUser.isUserIdValid.file}
+      uri: ${api.kcUser.uri.folder}${api.kcUser.isUserIdValid.file}
     file:
       findEmailAddress: /findEmailAddress/{userId}
       create: /create
+      userIdExists: /userIdExists/{userId}
+      enable: /enable/{userId}
       delete: /delete/{userId}
     uri:
-      findEmailAddress: ${api.kcUser}${api.kcUser.file.findEmailAddress}
-      create: ${api.kcUser}${api.kcUser.file.create}
-      delete: ${api.kcUser}${api.kcUser.file.delete}
+      folder: ${api.kcUser.server}${api.kcUser.folder}
+      findEmailAddress: ${api.kcUser.uri.folder}${api.kcUser.file.findEmailAddress}
+      create: ${api.kcUser.uri.folder}${api.kcUser.file.create}
+      userIdExists: ${api.kcUser.uri.folder}${api.kcUser.file.userIdExists}
+      enable: ${api.kcUser.uri.folder}${api.kcUser.file.enable}
+      delete: ${api.kcUser.uri.folder}${api.kcUser.file.delete}
     path:
-      create: ${api.kcUser.folder}${api.kcUser.file.create}
+      login: ${api.kcUser.folder}/${api.kcUser.login.file}
+      find: ${api.kcUser.folder}/${api.kcUser.find.file}
+      delete: ${api.kcUser.folder}${api.kcUser.file.delete}
   mail:
     url: http://etmail:${PORT_MESSENGER}
     folder: /api/v0/email

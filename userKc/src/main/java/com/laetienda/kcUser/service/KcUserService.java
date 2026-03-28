@@ -11,7 +11,9 @@ public interface KcUserService {
     String getToken(MultiValueMap<String, String> creds);
     String isUsernameValid(String username) throws NotValidCustomException;
     String isUserIdValid(String userId) throws NotValidCustomException;
+    Boolean userIdExists(String userId) throws HttpStatusCodeException;
     String getEmailAddress(String userId) throws HttpStatusCodeException;
     KcUser createUser(Usuario user) throws NotValidCustomException;
+    KcUser enable(String userId) throws HttpStatusCodeException;
     void deleteUser(String userId) throws HttpStatusCodeException;
 }

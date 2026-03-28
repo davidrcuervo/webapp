@@ -23,6 +23,9 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -33,6 +36,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 @AutoConfigureMockMvc
 class UserControllerTest {
     private final static Logger log = LoggerFactory.getLogger(UserControllerTest.class);
+    private final String userPassword = "secretPassword";
 
     @Autowired private MockMvc mvc;
     @Autowired private Environment env;
@@ -56,7 +60,8 @@ class UserControllerTest {
     void authentication() throws Exception {
         String address = env.getProperty("api.kcUser.login.uri"); //api/v0/user/login.html
         assertNotNull(address);
-        mvc.perform(get(address).with(jwt()))
+        mvc.perform(get(address)
+                        .with(jwt().authorities(new SimpleGrantedAuthority("role_service"))))
                 .andExpect(status().isOk());
     }
 
@@ -77,6 +82,20 @@ class UserControllerTest {
     }
 
     @Test
+    void find() throws Exception {
+        String username = env.getProperty("webapp.user.test.username", "");
+        String secret = env.getProperty("webapp.user.test.password", "");
+        String address = env.getProperty("api.kcUser.find.uri", ""); //http://127.0.0.1:$8001/api/v0/user/find
+        String token = getToken(username,secret);
+
+        mvc.perform(get(address)
+                .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.firstName").value("Test User"))
+                .andExpect(jsonPath("$.username").value("samsepi0l"));
+    }
+
+    @Test
     void login() throws Exception{
         String username = env.getProperty("webapp.user.test.username", "");
         String secret = env.getProperty("webapp.user.test.password", "");
@@ -91,20 +110,6 @@ class UserControllerTest {
                         .jwt(jwt -> jwt.claim("preferred_username", "testuser"))
                         .authorities(new SimpleGrantedAuthority("role_test"))))
                 .andExpect(status().isOk());
-    }
-
-    @Test
-    void find() throws Exception {
-        String username = env.getProperty("webapp.user.test.username", "");
-        String secret = env.getProperty("webapp.user.test.password", "");
-        String address = env.getProperty("api.kcUser.find.uri", ""); //http://127.0.0.1:$8001/api/v0/user/find
-        String token = getToken(username,secret);
-
-        mvc.perform(get(address)
-                .header("Authorization", "Bearer " + token))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.firstName").value("Test User"))
-                .andExpect(jsonPath("$.username").value("samsepi0l"));
     }
 
     @Test
@@ -150,16 +155,19 @@ class UserControllerTest {
         assertNotNull(username);
 
         //Test if user exists it should reply ok and id of user
-        mvc.perform(get(address, username))
+        mvc.perform(get(address, username)
+                        .with(jwt().authorities(new SimpleGrantedAuthority("role_service"))))
                 .andExpect(status().isOk()
                 );
 
         //Test is user exists if should return 404 not found
-        mvc.perform(get(address, "invalidusername"))
+        mvc.perform(get(address, "invalidusername")
+                        .with(jwt().authorities(new SimpleGrantedAuthority("role_service"))))
                 .andExpect(status().isNotFound());
 
         //Test service account. Should return 404 not found
-        mvc.perform(get(address, service))
+        mvc.perform(get(address, service)
+                        .with(jwt().authorities(new SimpleGrantedAuthority("role_service"))))
                 .andExpect(status().isBadRequest());
     }
 
@@ -170,7 +178,8 @@ class UserControllerTest {
         String userId = env.getProperty("webapp.user.test.userId");
         assertNotNull(userId);
 
-        mvc.perform(get(address,userId).with(jwt()))
+        mvc.perform(get(address,userId)
+                        .with(jwt().authorities(new SimpleGrantedAuthority("role_service"))))
                 .andExpect(status().isOk());
     }
 
@@ -181,10 +190,12 @@ class UserControllerTest {
         String serviceUserId = env.getProperty("webapp.user.service.userId");
         assertNotNull(serviceUserId);
 
-        mvc.perform(get(address, serviceUserId).with(jwt()))
+        mvc.perform(get(address, serviceUserId)
+                        .with(jwt().authorities(new SimpleGrantedAuthority("role_service"))))
                 .andExpect(status().isBadRequest());
 
-        mvc.perform(get(address, "invalid-service-id").with(jwt()))
+        mvc.perform(get(address, "invalid-service-id")
+                        .with(jwt().authorities(new SimpleGrantedAuthority("role_service"))))
                 .andExpect(status().isNotFound());
     }
 
@@ -194,7 +205,9 @@ class UserControllerTest {
         assertNotNull(address);
 
         MvcResult response = mvc.perform(get(address, testUserId)
-                        .with(jwt().jwt(jwt -> jwt.claim("sub", adminUserId)))
+                        .with(jwt()
+                                .jwt(jwt -> jwt.claim("sub", adminUserId))
+                                .authorities(new SimpleGrantedAuthority("role_service")))
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andReturn();
@@ -204,7 +217,9 @@ class UserControllerTest {
         assertEquals("myself@la-etienda.com", result);
 
         mvc.perform(get(address, "not-valid-user-id")
-                        .with(jwt().jwt(jwt -> jwt.claim("sub", testUserId)))
+                        .with(jwt()
+                                .jwt(jwt -> jwt.claim("sub", testUserId))
+                                .authorities(new SimpleGrantedAuthority("role_service")))
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound());
 
@@ -214,7 +229,14 @@ class UserControllerTest {
     }
 
     @Test
-    void createUser() throws Exception {
+    void cycle() throws Exception {
+        KcUser user = createUser();
+        validateUser(user);
+        String jwtToken = enableUser(user);
+        deleteUser(user, jwtToken);
+    }
+
+    KcUser createUser() throws Exception {
 
         String address = env.getProperty("api.kcUser.uri.create");
         assertNotNull(address);
@@ -225,7 +247,7 @@ class UserControllerTest {
         Usuario user = new Usuario(testUsername,
                 "Test", "User", "KcUser",
                 "test.kcuser@la-etienda.com", false,
-                "secretPassword", "secretPassword2");
+                userPassword, "badPasswd");
 
         //CREATE::BAD_REQUEST: Create user while passwords are different
         mvc.perform(post(address)
@@ -251,22 +273,95 @@ class UserControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON)
                         .content(json.writeValueAsBytes(user)))
-                    .andExpect(status().isOk()).andReturn();
+                .andExpect(status().isOk()).andReturn();
         KcUser result = json.readValue(response.getResponse().getContentAsString(), KcUser.class);
         assertNotNull(result.getId());
 
-        //DELETE::UNAUTHORIZED: Try to remove user by using a different user account.
-        address = env.getProperty("api.kcUser.uri.delete");
+        //CREATE::FORBIDDEN: Create user with same username
+        mvc.perform(post(address)
+                .with(jwt().authorities(new SimpleGrantedAuthority("role_service")))
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON)
+                .content(json.writeValueAsBytes(user)))
+            .andExpect(status().isForbidden());
+
+        return result;
+    }
+
+    void validateUser(KcUser user) throws Exception {
+
+        String userExistsAddress = env.getProperty("api.kcUser.uri.userIdExists");
+        assertNotNull(userExistsAddress);
+
+        String isUserIdValidAddress = env.getProperty("api.kcUser.isUserIdValid.uri");
+        assertNotNull(isUserIdValidAddress);
+
+        //IS_USER_VALID::BAD_REQUEST. Test if user is valid should fail because email is not confirmed.
+        mvc.perform(get(isUserIdValidAddress, user.getId())
+                        .with(jwt().authorities(new SimpleGrantedAuthority("role_service"))))
+                .andExpect(status().isBadRequest());
+
+        //USER_EXISTS::SUCCESSFUL.
+        mvc.perform(get(userExistsAddress, user.getId())
+                        .with(jwt().authorities(new SimpleGrantedAuthority("role_service"))))
+                .andExpect(status().isNoContent());
+    }
+
+    private String enableUser(KcUser user) throws Exception {
+        String getTokenAddress = env.getProperty("api.kcUser.token.uri");
+        assertNotNull(getTokenAddress);
+
+        String address = env.getProperty("api.kcUser.uri.enable");
         assertNotNull(address);
 
-        mvc.perform(delete(address, result.getId())
+        //GET_TOKEN::BAD_REQUEST
+        MultiValueMap<String, String> credentials = new LinkedMultiValueMap<>();
+        credentials.add("username", user.getUsername());
+        credentials.add("password", userPassword);
+
+        mvc.perform(post(getTokenAddress)
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                .accept(MediaType.APPLICATION_JSON)
+                .params(credentials))
+            .andExpect(status().isBadRequest());
+
+        //ENABLE_USER::IS_CREATED
+        mvc.perform(put(address, user.getId())
+                        .with(jwt().authorities(new SimpleGrantedAuthority("role_service"))))
+                .andExpect(status().isCreated());
+
+        //GET_TOKEN::SUCCESSFUL
+        MvcResult resp = mvc.perform(post(getTokenAddress)
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                .accept(MediaType.APPLICATION_JSON)
+                .params(credentials))
+            .andExpect(status().isOk()).andReturn();
+
+        return resp.getResponse().getContentAsString();
+    }
+
+    void deleteUser(KcUser user, String jwtToken) throws Exception {
+
+        //DELETE::UNAUTHORIZED: Try to remove user by using a different user account.
+        String address = env.getProperty("api.kcUser.uri.delete");
+        assertNotNull(address);
+
+        mvc.perform(delete(address, user.getId())
                         .with(jwt()
                                 .jwt(jwt -> jwt.claim("sub", testUserId))))
                 .andExpect(status().isUnauthorized());
 
         //DELETE::SUCCESS: Delete user.
-        mvc.perform(delete(address, result.getId())
-                        .with(jwt().jwt(jwt -> jwt.claim("sub", result.getId()))))
+        mvc.perform(delete(address, user.getId())
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
                 .andExpect(status().isNoContent());
+
+        //USER_EXISTS::NOT_FOUND.
+        address = env.getProperty("api.kcUser.uri.userIdExists");
+        assertNotNull(address);
+
+        mvc.perform(get(address, user.getId())
+                        .with(jwt().authorities(new SimpleGrantedAuthority("role_service"))))
+                .andExpect(status().isNotFound());
     }
 }
