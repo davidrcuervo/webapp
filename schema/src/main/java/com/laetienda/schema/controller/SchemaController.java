@@ -41,7 +41,7 @@ public class SchemaController {
         return ResponseEntity.ok("Succesfull log in by " + principal.getName());
     }
 
-    @PostMapping("${api.schema.createPath}")
+    @PostMapping("${api.schema.create.file}")
     public <T> ResponseEntity<T> create(@RequestParam(required = true) String clase, @RequestBody String data) throws NotValidCustomException{
         String clazzName = new String(Base64.getUrlDecoder().decode(clase.getBytes()), StandardCharsets.UTF_8);
         log.debug("SCHEMA_CONTROLLER::create $clazzName: {}", clazzName);
@@ -59,7 +59,7 @@ public class SchemaController {
         }
     }
 
-    @PostMapping("${api.schema.findPath}")
+    @PostMapping("${api.schema.find.file}")
     public <T> ResponseEntity<T> find(@RequestParam String clase, @RequestBody Map<String, String> body) throws NotValidCustomException{
         String clazzName = new String(Base64.getUrlDecoder().decode(clase.getBytes()), StandardCharsets.UTF_8);
         log.debug("SCHEMA_CONTROLLER::find $clazzName: {}", clazzName);
@@ -80,7 +80,7 @@ public class SchemaController {
         return ResponseEntity.ok(itemService.isItemValid(id, clazzName).toString());
     }
 
-    @GetMapping("${api.schema.findById}")
+    @GetMapping("${api.schema.findById.file}")
     public <T> ResponseEntity<T> findById(@RequestParam String clase, @PathVariable Long id) throws NotValidCustomException {
         String clazzName = new String(Base64.getUrlDecoder().decode(clase.getBytes()), StandardCharsets.UTF_8);
         log.debug("SCHEMA_CONTROLLER::findById $clazzName: {}, $id: {}", clazzName, id);
@@ -95,7 +95,7 @@ public class SchemaController {
         }
     }
 
-    @PutMapping("${api.schema.updatePath}")
+    @PutMapping("${api.schema.update.file}")
     public <T> ResponseEntity<T> update(@RequestParam String clase, @RequestBody String data) throws NotValidCustomException {
         String clazzName = new String(Base64.getUrlDecoder().decode(clase.getBytes()), StandardCharsets.UTF_8);
         log.debug("SCHEMA_CONTROLLER::update $clazzName: {}", clazzName);
@@ -110,7 +110,7 @@ public class SchemaController {
         }
     }
 
-    @PostMapping("${api.schema.deletePath}")
+    @PostMapping("${api.schema.delete.file}")
     public ResponseEntity<Boolean> delete(@RequestParam String clase, @RequestBody Map<String, String> body) throws NotValidCustomException{
         String clazzName = new String(Base64.getUrlDecoder().decode(clase.getBytes()), StandardCharsets.UTF_8);
         log.debug("SCHEMA_CONTROLLER::delete $clazzName: {}", clazzName);
@@ -126,7 +126,7 @@ public class SchemaController {
         }
     }
 
-    @DeleteMapping("${api.schema.deleteById}") //api/v0/schema/delete/{id}?clase={clazzName}
+    @DeleteMapping("${api.schema.deleteById.file}") //api/v0/schema/delete/{id}?clase={clazzName}
     public ResponseEntity<Boolean> deleteById(@RequestParam String clase, @PathVariable Long id) throws NotValidCustomException{
         String clazzName = new String(Base64.getUrlDecoder().decode(clase.getBytes()), StandardCharsets.UTF_8);
         log.debug("SCHEMA_CONTROLLER::deleteById $clazzName: {}, $id: {}", clazzName, id);

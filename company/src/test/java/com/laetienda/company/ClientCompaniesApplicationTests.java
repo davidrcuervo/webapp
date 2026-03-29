@@ -447,28 +447,33 @@ class ClientCompaniesApplicationTests {
     }
 
     private Company companyAddManager(Company comp) throws Exception {
-        String address = env.getProperty("api.company.manager.file.uri.add");
+        String address = env.getProperty("api.company.manager.uri.add");
         assertNotNull(address);
 
         assertFalse(comp.getEditors().contains(adminUserId));
 
-        //FORBIDDEN: Add manager that is same owner
+        //BAD_REQUEST: Add manager that is same owner
         mvc.perform(put(address, comp.getId(), testUserId)
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtTestUser))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isBadRequest());
 
         //UNAUTHORIZED: Add manager by user that is not manager
         mvc.perform(put(address, comp.getId(), adminUserId)
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + getJwtAdminUser()))
                 .andExpect(status().isUnauthorized());
 
-        //Add manager by owner.
+        //SUCCESSFUL: Add manager by owner.
         MvcResult response = mvc.perform(put(address, comp.getId(), adminUserId)
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtTestUser)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk()).andReturn();
         Company result = json.readValue(response.getResponse().getContentAsString(), Company.class);
-        assertTrue(comp.getEditors().contains(adminUserId));
+        assertTrue(result.getEditors().contains(adminUserId));
+
+        //BAD_REQUEST: Add manager that is already manager
+        mvc.perform(put(address, comp.getId(), adminUserId)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtTestUser))
+                .andExpect(status().isBadRequest());
 
         //FORBIDDEN: Block manager by new manager
         response = mvc.perform(get(findMemberAddress, comp.getId(), testUserId)
@@ -478,7 +483,7 @@ class ClientCompaniesApplicationTests {
         Member member = json.readValue(response.getResponse().getContentAsString(), Member.class);
 
         member.setStatus(CompanyMemberStatus.BLOCKED);
-        mvc.perform(post(updateMemberAddress)
+        mvc.perform(put(updateMemberAddress)
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + getJwtAdminUser())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json.writeValueAsString(member)))

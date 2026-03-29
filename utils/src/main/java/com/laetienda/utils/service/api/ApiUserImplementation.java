@@ -23,6 +23,9 @@ import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.Map;
+import java.util.function.Consumer;
+
 import static org.springframework.security.oauth2.client.web.client.RequestAttributeClientRegistrationIdResolver.clientRegistrationId;
 
 @Component
@@ -146,14 +149,23 @@ public class ApiUserImplementation implements ApiUser{
     }
 
     @Override
-    public String getEmailAddress(String userId) throws HttpStatusCodeException {
+    public String getEmailAddress(String userId, String clientRegistrationId) throws HttpStatusCodeException {
         String address = env.getProperty("api.kcUser.uri.findEmailAddress", "/findEmailAddress/{userId}");
-        log.debug("API_USER::getEmailAddress. $userId: {}", userId);
+        log.debug("API_USER::getEmailAddress. $userId: {} | $address: {}", userId, address);
 
-        return client.get().uri(address, userId)
-                .accept(MediaType.APPLICATION_JSON)
-                .retrieve().toEntity(String.class).getBody();
+        var tempClient = client.get().uri(address, userId)
+                .accept(MediaType.APPLICATION_JSON);
+
+        if(clientRegistrationId != null){
+            log.debug("API_USER::getEmailAddress by using clientRegistrationId");
+            tempClient = tempClient.attributes(clientRegistrationId(clientRegistrationId));
+        }
+
+        return tempClient.retrieve().toEntity(String.class).getBody();
     }
 
-
+    @Override
+    public String getEmailAddress(String userId) throws HttpStatusCodeException {
+        return  getEmailAddress(userId, null);
+    }
 }

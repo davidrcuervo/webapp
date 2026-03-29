@@ -15,5 +15,6 @@ public interface ApiUser {
     ResponseEntity<Void> delete(String userId, String jwtToken) throws HttpStatusCodeException;
     String getToken(String username, String password) throws  HttpStatusCodeException;
     String getCurrentUserId() throws NotValidCustomException;
+    String getEmailAddress(String userId, String clientRegistrationId) throws HttpStatusCodeException;
     String getEmailAddress(String userId) throws HttpStatusCodeException;
 }

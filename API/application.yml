@@ -46,6 +46,66 @@ api:
       login: ${api.kcUser.folder}/${api.kcUser.login.file}
       find: ${api.kcUser.folder}/${api.kcUser.find.file}
       delete: ${api.kcUser.folder}${api.kcUser.file.delete}
+  schema:
+    port: 8083
+    url: http://etschema:${api.schema.port}
+    root: /api/v0/schema
+    uri: ${api.schema.url}${api.schema.root}
+    helloAll: helloAll
+    helloUser: helloUser
+    login:
+      file: login
+      uri: ${api.schema.uri}/${api.schema.login.file}
+    create:
+      file: create
+      path: ${api.schema.create.file}?clase={clazzName}
+      uri: ${api.schema.uri}/${api.schema.create.path}
+    isItemValid:
+      file: isItemValid/{id}
+      uri: ${api.schema.uri}/${api.schema.isItemValid.file}?clase={clazzName}
+    find:
+      file: find
+      path: ${api.schema.find.file}?clase={clazzName}
+      uri: ${api.schema.uri}/${api.schema.find.path}
+    findById:
+      file: find/{id}
+      uri: ${api.schema.uri}/${api.schema.findById.file}?clase={clazzName}
+    findSingleResultByQuery:
+      file: findSingleResultByQuery
+      uri: ${api.schema.uri}/${api.schema.findSingleResultByQuery.file}?clase={clazzName}
+    findByQuery:
+      file: findByQuery
+      uri: ${api.schema.uri}/${api.schema.findByQuery.file}?clase={clazzEncoded}
+    delete:
+      file: delete
+      path: ${api.schema.delete.file}?clase={clazzName}
+      uri: ${api.schema.uri}/${api.schema.delete.path}
+    deleteById:
+      file: delete/{id}
+      uri: ${api.schema.uri}/${api.schema.deleteById.file}?clase={clazzName}
+    deleteUserById:
+      file: deleteUser/{userId}
+      uri: ${api.schema.uri}/${api.schema.deleteUserById.file}
+    update:
+      file: update
+      path: ${api.schema.update.file}?clase={clazzName}
+      uri: ${api.schema.uri}/${api.schema.update.path}
+    group:
+      root: ${api.schema.root}/group
+      file:
+        create: /group/create/
+        update: /group/{groupId}/update
+        delete: /group/{groupId}/delete
+        member:
+          add: /group/{groupId}/member/add/{userId}
+          remove: /group/{groupId}/member/remove/{userId}
+      uri:
+        create: ${api.schema.uri}${api.schema.group.file.create}
+        update: ${api.schema.uri}${api.schema.group.file.update}
+        delete: ${api.schema.uri}${api.schema.group.file.delete}
+        member:
+          add: ${api.schema.uri}${api.schema.group.file.member.add}
+          remove: ${api.schema.uri}${api.schema.group.file.member.remove}
   mail:
     url: http://etmail:${PORT_MESSENGER}
     folder: /api/v0/email

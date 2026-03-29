@@ -13,5 +13,6 @@ public class User {
 
     public void run() throws HttpStatusCodeException, AssertionError {
         testUserApi.cycle();
+        testUserApi.findEmailAddress();
     }
 }

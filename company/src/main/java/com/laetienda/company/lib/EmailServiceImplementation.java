@@ -25,6 +25,9 @@ public class EmailServiceImplementation implements EmailService{
     @Value("${webapp.messenger.enable}")
     private Boolean flag;
 
+    @Value("${kc.client-registration-id.webapp}")
+    private String clientRegistrationId;
+
     @Override
     public void sendFriendRequest(Friend friend) throws NotValidCustomException {
         log.debug("EMAIL_SERVICE::sendFriendRequest.");
@@ -32,7 +35,7 @@ public class EmailServiceImplementation implements EmailService{
         try {
             if(flag) {
                 String buddyUserId = friend.getBuddy().getUserId();
-                String emailAddress = apiUser.getEmailAddress(buddyUserId);
+                String emailAddress = apiUser.getEmailAddress(buddyUserId, clientRegistrationId);
                 EmailMessage message = new EmailMessage("company/SendFriendRequest.html", emailAddress, "You have a new friend request");
                 message.setItem(friend, Friend.class);
                 email.send(message);
@@ -53,7 +56,7 @@ public class EmailServiceImplementation implements EmailService{
         try{
             if(flag){
                 String memberUserId = friend.getMember().getUserId();
-                String address = apiUser.getEmailAddress(memberUserId);
+                String address = apiUser.getEmailAddress(memberUserId, clientRegistrationId);
                 EmailMessage message = new EmailMessage("company/AcceptFriendRequest.html", address, "Friend request has been accepted");
                 message.setItem(friend, Friend.class);
                 email.send(message);

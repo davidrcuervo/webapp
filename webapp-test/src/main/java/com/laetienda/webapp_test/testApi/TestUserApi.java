@@ -5,4 +5,5 @@ import org.springframework.web.client.HttpStatusCodeException;
 
 public interface TestUserApi {
     void cycle() throws HttpStatusCodeException;
+    void findEmailAddress() throws HttpStatusCodeException;
 }

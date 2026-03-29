@@ -2,6 +2,7 @@ package com.laetienda.model.schema;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
+import net.minidev.json.annotate.JsonIgnore;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -9,6 +10,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Inheritance(strategy = InheritanceType.JOINED)
@@ -33,6 +35,16 @@ public abstract class DbItem {
     @CollectionTable(name = "ITEM_READER", joinColumns = @JoinColumn(name = "ITEM_ID"))
     @Column(name = "reader")
     private List<String> readers;
+
+    @JsonIgnore
+    @OneToMany(mappedBy = "item", fetch = FetchType.LAZY)
+    @Column(name = "READER_GROUPS")
+    private Set<DbGroup> readersGroups;
+
+    @JsonIgnore
+    @OneToMany(mappedBy = "item", fetch = FetchType.LAZY)
+    @Column(name = "EDITOR_GROUPS")
+    private Set<DbGroup> editorGroups;
 
     @CreatedDate
     @Column(name = "created", insertable = true, updatable = false)

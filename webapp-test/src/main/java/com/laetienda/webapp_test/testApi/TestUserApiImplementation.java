@@ -24,6 +24,9 @@ public class TestUserApiImplementation implements TestUserApi {
     @Value("${kc.client-registration-id.webapp}")
     private String clientRegistrationId;
 
+    @Value("${webapp.user.test.userId}")
+    private String testUserId;
+
     @Override
     public void cycle() throws HttpStatusCodeException, AssertionError {
         log.info("TEST_USER_API::cycle | Test starting...");
@@ -65,6 +68,21 @@ public class TestUserApiImplementation implements TestUserApi {
         });
         assertEquals(HttpStatus.NOT_FOUND, e.getStatusCode());
 
-        log.info("TEST_USER_API::cycle | ...Test finishes successfully.");
+        log.info("TEST_USER_API::cycle | Test finishes successfully.");
+    }
+
+    @Override
+    public void findEmailAddress() throws HttpStatusCodeException {
+        log.info("TEST_API_USER::findEmailAddress | Test starting...");
+
+        HttpStatusCodeException e = assertThrows(HttpStatusCodeException.class, () -> {
+           apiUser.getEmailAddress(testUserId);
+        });
+        assertEquals(HttpStatus.UNAUTHORIZED, e.getStatusCode());
+
+        String emailAddress = apiUser.getEmailAddress(testUserId, clientRegistrationId);
+        log.trace("TEST_API_USER::findEmailAddress. $emailAddress : {}", emailAddress);
+
+        log.info("TEST_API_USER::findEmailAddress | Test finished successfully.");
     }
 }

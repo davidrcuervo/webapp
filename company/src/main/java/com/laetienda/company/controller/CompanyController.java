@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.HttpStatusCodeException;
 
 @RestController
 @RequestMapping("${api.company.folder}") //api/v0/Company
@@ -52,6 +53,12 @@ public class CompanyController {
     public ResponseEntity<Company> updateMemberPolicy(@PathVariable String companyId, @RequestBody String description) throws NotValidCustomException {
         log.info("COMPANY_CONTROLLER::updateDescription. $companyId: {} | $description: {}", companyId, description);
         return ResponseEntity.ok(service.updateDescription(companyId, description));
+    }
+
+    @PutMapping("${api.company.manager.file.add}") //api/v0/company/{companyId}/manager/add/{userId}
+    public ResponseEntity<Company> addManager(@PathVariable String companyId, @PathVariable String userId) throws HttpStatusCodeException {
+        log.info("COMPANY_CONTROLLER::addManager. $companyId: {} | $userId: {}", companyId, userId);
+        return ResponseEntity.ok(service.addManager(companyId, userId));
     }
 
 //    @PostMapping("${api.company.update.file.memberPolicy}") //api/v0/company/update/{companyId}/description
