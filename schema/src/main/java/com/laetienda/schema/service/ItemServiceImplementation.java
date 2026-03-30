@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.laetienda.lib.exception.NotValidCustomException;
 import com.laetienda.lib.service.ToolBoxService;
 import com.laetienda.model.schema.DbItem;
+import com.laetienda.schema.repository.DbGroupRepository;
 import com.laetienda.schema.repository.ItemRepository;
 import com.laetienda.schema.repository.SchemaRepository;
 import com.laetienda.utils.service.api.ApiUser;
@@ -26,12 +27,40 @@ import java.util.Map;
 public class ItemServiceImplementation implements ItemService{
     private final static Logger log = LoggerFactory.getLogger(ItemServiceImplementation.class);
 
-    @Autowired private ItemRepository itemRepo;
-    @Autowired private HttpServletRequest request;
-    @Autowired private ApiUser apiUser;
-    @Autowired private ObjectMapper jsonMapper;
-    @Autowired private SchemaRepository schemaRepo;
-    @Autowired private ToolBoxService tb;
+//    @Autowired private ItemRepository itemRepo;
+//    @Autowired private HttpServletRequest request;
+//    @Autowired private ApiUser apiUser;
+//    @Autowired private ObjectMapper jsonMapper;
+//    @Autowired private SchemaRepository schemaRepo;
+//    @Autowired private ToolBoxService tb;
+
+    private final ItemRepository itemRepo;
+    private final SchemaRepository schemaRepo;
+    private final DbGroupService groupService;
+    private final HttpServletRequest request;
+    private final ApiUser apiUser;
+    private final ObjectMapper jsonMapper;
+    private final ToolBoxService tb;
+
+    ItemServiceImplementation(
+            ItemRepository itemRepository,
+            SchemaRepository schemaRepository,
+            DbGroupService dbGroupService,
+            HttpServletRequest httpServletRequest,
+            ApiUser apiUser,
+            ObjectMapper objectMapper,
+            ToolBoxService toolBoxService
+            ){
+
+        this.itemRepo = itemRepository;
+        this.schemaRepo = schemaRepository;
+        this.groupService = dbGroupService;
+        this.request = httpServletRequest;
+        this.apiUser = apiUser;
+        this.jsonMapper = objectMapper;
+        this.tb = toolBoxService;
+
+    }
 
     @Value("${webapp.user.service.userId}")
     private String serviceUserId;
@@ -62,6 +91,9 @@ public class ItemServiceImplementation implements ItemService{
             //Check if object is valid
             readersAndEditorsExists(item);
 
+            //Process groups of item
+            groupService.create(item);
+
             //Persist
             schemaRepo.create(clazz, item);
             log.trace("SCHEMA_REPO::create $item.id: {}", item.getId());
@@ -81,7 +113,7 @@ public class ItemServiceImplementation implements ItemService{
     }
 
     private void setOwner(DbItem item) throws NotValidCustomException {
-        String userId = SecurityContextHolder.getContext().getAuthentication().getName();
+        String userId = apiUser.getCurrentUserId();
         log.trace("ITEM_SERVICE::setOwner. $loggedUser: {}", userId);
 
         if(item.getOwner() != null && !item.getOwner().equals(userId)){
@@ -90,14 +122,7 @@ public class ItemServiceImplementation implements ItemService{
             throw new NotValidCustomException(message, HttpStatus.BAD_REQUEST, "item");
         }
 
-        try{
-            apiUser.isUserIdValid(userId);
-            item.setOwner(userId);
-        }catch(NotValidCustomException ex) {
-            String message = "ITEM_SERVICE::setOwner. Owner does not exist.";
-            log.info(message);
-            throw new NotValidCustomException(message, HttpStatus.UNAUTHORIZED, "item");
-        }
+        item.setOwner(userId);
     }
 
     @Override
@@ -307,15 +332,15 @@ public class ItemServiceImplementation implements ItemService{
                 }
             }
 
-        }catch(NotValidCustomException ex){
-            if(ex.getStatus() == HttpStatus.NOT_FOUND){
+        }catch(HttpClientErrorException ex){
+            if(ex.getStatusCode() == HttpStatus.NOT_FOUND){
                 String message = "ITEM_SERVICE::verifyReadersAndEditors. Owner, reader or editor does not exist.";
                 log.info(message);
                 throw new NotValidCustomException(message, HttpStatus.BAD_REQUEST, "item");
             }
 
-            log.debug("ITEM_SERVICE::verifyReadersAndEditors $code: {}, $error: {}", ex.getStatus(), ex.getMessage());
-            throw new NotValidCustomException(ex.getMessage(), ex.getStatus(), "item");
+            log.debug("ITEM_SERVICE::verifyReadersAndEditors $code: {}, $error: {}", ex.getStatusCode(), ex.getMessage());
+            throw new NotValidCustomException(ex.getMessage(), ex.getStatusCode(), "item");
         }
     }
 

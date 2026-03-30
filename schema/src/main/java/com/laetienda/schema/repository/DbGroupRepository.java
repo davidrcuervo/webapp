@@ -6,4 +6,6 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface DbGroupRepository extends JpaRepository<DbGroup, Long> {
+//    DbGroup findById(long id);
+    DbGroup findByName(String name);
 }

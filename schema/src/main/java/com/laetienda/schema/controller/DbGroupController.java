@@ -2,13 +2,10 @@ package com.laetienda.schema.controller;
 
 import com.laetienda.model.schema.DbGroup;
 import com.laetienda.schema.service.DbGroupService;
-import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Role;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.HttpStatusCodeException;
 
@@ -19,12 +16,16 @@ import java.util.Map;
 public class DbGroupController {
     private final static Logger log = LoggerFactory.getLogger(DbGroupController.class);
 
-    @Autowired private DbGroupService service;
+    private final DbGroupService service;
 
-    @PostMapping("${api.schema.group.file.create}") //group/create
-    public ResponseEntity<DbGroup> create(@RequestBody DbGroup dbGroup) throws HttpStatusCodeException {
-        log.info("DbGROUP_CONTROLLER::create");
-        return ResponseEntity.ok(service.create(dbGroup));
+    DbGroupController(DbGroupService service) {
+        this.service = service;
+    }
+
+    @GetMapping("${api.schema.group.file.findByName}") //group/find/{groupName}
+    public ResponseEntity<DbGroup> findByName(@PathVariable String groupName) {
+        log.info("DbGROUP_CONTROLLER::findByName. $groupName: {}", groupName);
+        return ResponseEntity.ok(service.findByName(groupName));
     }
 
     @PutMapping("${api.schema.group.file.update}")  //group/{groupId}/update

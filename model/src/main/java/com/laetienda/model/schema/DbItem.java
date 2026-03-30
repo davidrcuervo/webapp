@@ -1,14 +1,15 @@
 package com.laetienda.model.schema;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
-import net.minidev.json.annotate.JsonIgnore;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -36,14 +37,10 @@ public abstract class DbItem {
     @Column(name = "reader")
     private List<String> readers;
 
-    @JsonIgnore
-    @OneToMany(mappedBy = "item", fetch = FetchType.LAZY)
-    @Column(name = "READER_GROUPS")
+    @ManyToMany(mappedBy = "items")
     private Set<DbGroup> readersGroups;
 
-    @JsonIgnore
-    @OneToMany(mappedBy = "item", fetch = FetchType.LAZY)
-    @Column(name = "EDITOR_GROUPS")
+    @ManyToMany(mappedBy = "items")
     private Set<DbGroup> editorGroups;
 
     @CreatedDate
@@ -124,6 +121,44 @@ public abstract class DbItem {
             editors.remove(username);
         }
         return this;
+    }
+
+    public Set<DbGroup> getReadersGroups() {
+        return readersGroups;
+    }
+
+    public void addReaderGroup(DbGroup group) {
+        if(readersGroups == null){
+            readersGroups = new HashSet<DbGroup>();
+        };
+
+        group.addItem(this);
+        readersGroups.add(group);
+    }
+
+    public void removeReaderGroup(DbGroup group) {
+        if(readersGroups != null){
+            readersGroups.remove(group);
+        }
+    }
+
+    public Set<DbGroup> getEditorGroups() {
+        return editorGroups;
+    }
+
+    public void addEditorGroup(DbGroup group) {
+        if(editorGroups == null){
+            editorGroups = new HashSet<>();
+        }
+
+        group.addItem(this);
+        editorGroups.add(group);
+    }
+
+    public void removeEditorGroup(DbGroup group) {
+        if(editorGroups != null){
+            editorGroups.remove(group);
+        }
     }
 
     public LocalDateTime getCreated() {

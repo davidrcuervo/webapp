@@ -8,13 +8,13 @@ import org.springframework.web.client.HttpStatusCodeException;
 
 public interface ApiUser {
     String isUsernameValid(String username) throws NotValidCustomException;
-    String isUserIdValid(String userId) throws NotValidCustomException;
+    String isUserIdValid(String userId) throws HttpStatusCodeException;
     Boolean userIdExists(String userId, String clientRegistrationId) throws HttpStatusCodeException;
     KcUser create(Usuario usuario, String clientRegistrationId) throws HttpStatusCodeException;
     void enable(String userId, String clientRegistrationId) throws HttpStatusCodeException;
     ResponseEntity<Void> delete(String userId, String jwtToken) throws HttpStatusCodeException;
     String getToken(String username, String password) throws  HttpStatusCodeException;
-    String getCurrentUserId() throws NotValidCustomException;
+    String getCurrentUserId() throws HttpStatusCodeException;
     String getEmailAddress(String userId, String clientRegistrationId) throws HttpStatusCodeException;
     String getEmailAddress(String userId) throws HttpStatusCodeException;
 }

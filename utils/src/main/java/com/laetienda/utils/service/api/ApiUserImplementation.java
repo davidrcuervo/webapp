@@ -56,19 +56,13 @@ public class ApiUserImplementation implements ApiUser{
     }
 
     @Override
-    public String isUserIdValid(String userId) throws NotValidCustomException {
+    public String isUserIdValid(String userId) throws HttpStatusCodeException {
         String address = env.getProperty("api.kcUser.isUserIdValid.uri", "#");
         log.debug("API_USER::isUserIdValid. $userId: {} | $address: {}", userId, address);
 
-        try{
-            return client.get().uri(address, userId)
-                    .attributes(clientRegistrationId(webappClientId))
-                    .retrieve().toEntity(String.class).getBody();
-        }catch(HttpClientErrorException e){
-            log.warn("API_USER::isUserIdValid: $code: {} | $message: {}", e.getRawStatusCode(), e.getMessage());
-            log.debug("API_USER::isUserIdValid", e);
-            throw new NotValidCustomException(e);
-        }
+        return client.get().uri(address, userId)
+                .attributes(clientRegistrationId(webappClientId))
+                .retrieve().toEntity(String.class).getBody();
     }
 
     @Override
@@ -138,7 +132,7 @@ public class ApiUserImplementation implements ApiUser{
     }
 
     @Override
-    public String getCurrentUserId() throws NotValidCustomException{
+    public String getCurrentUserId() throws HttpStatusCodeException{
         String userId = SecurityContextHolder.getContext().getAuthentication().getName();
         log.debug("API_USER::getCurrentUser. $loggedUser: {}", userId);
 

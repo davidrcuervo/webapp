@@ -93,14 +93,14 @@ api:
     group:
       root: ${api.schema.root}/group
       file:
-        create: /group/create/
+        findByName: /group/findByName/{groupName}
         update: /group/{groupId}/update
         delete: /group/{groupId}/delete
         member:
           add: /group/{groupId}/member/add/{userId}
           remove: /group/{groupId}/member/remove/{userId}
       uri:
-        create: ${api.schema.uri}${api.schema.group.file.create}
+        findByName: ${api.schema.uri}${api.schema.group.file.findByName}
         update: ${api.schema.uri}${api.schema.group.file.update}
         delete: ${api.schema.uri}${api.schema.group.file.delete}
         member:

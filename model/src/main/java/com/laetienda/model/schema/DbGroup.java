@@ -1,8 +1,13 @@
 package com.laetienda.model.schema;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.laetienda.lib.options.DbGroupPolicy;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+import org.checkerframework.common.aliasing.qual.Unique;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -14,9 +19,20 @@ public class DbGroup {
     @GeneratedValue
     private Long id;
 
-    @NotNull @ManyToOne
-    @JoinColumn(name = "item_id")
-    private DbItem item;
+    @NotNull
+    @Size(min=1, max = 32)
+    @Column(unique = true, nullable = false)
+    private String name;
+
+    @JsonIgnore
+    @NotNull
+    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @JoinTable(
+            name = "schema_item_groups",
+            joinColumns = @JoinColumn(name="group_id"),
+            inverseJoinColumns = @JoinColumn(name="item_id")
+    )
+    private Set<DbItem> items;
 
     @NotNull
     private String owner;
@@ -31,6 +47,14 @@ public class DbGroup {
 
     public Long getId() {
         return id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 
     public String getOwner() {
@@ -50,6 +74,9 @@ public class DbGroup {
     }
 
     public Set<String> getMembers() {
+        if(members == null) {
+            members = new HashSet<>();
+        }
         return members;
     }
 
@@ -68,6 +95,27 @@ public class DbGroup {
     public void removeMember(String member){
         if(members != null){
             members.remove(member);
+        }
+    }
+
+    public Set<DbItem> getItems() {
+        if(items == null){
+            items = new HashSet<>();
+        }
+        return items;
+    }
+
+    public void addItem(DbItem item) {
+        if(items == null){
+            items = new HashSet<>();
+        }
+
+        items.add(item);
+    }
+
+    public void removeItem(DbItem item) {
+        if(items != null){
+            items.remove(item);
         }
     }
 }

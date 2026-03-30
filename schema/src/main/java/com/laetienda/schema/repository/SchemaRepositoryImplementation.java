@@ -16,6 +16,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Repository;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpStatusCodeException;
 
 import java.lang.reflect.Type;
 import java.util.List;
@@ -33,15 +35,15 @@ public class SchemaRepositoryImplementation implements SchemaRepository{
 
     @Override
     @Transactional
-    public <T> T create(Class<T> clazz, DbItem item) throws NotValidCustomException {
+    public <T> T create(Class<T> clazz, DbItem item) throws HttpStatusCodeException {
         log.debug("SCHEMA_REPO::create $clazzName: {}", clazz.getName());
         try{
             em.persist(item);
             return clazz.cast(item);
         }catch(Exception ex){
-            log.error(ex.getMessage());
-            log.trace(ex.getMessage(), ex);
-            throw new NotValidCustomException(ex.getMessage(), HttpStatus.BAD_REQUEST, "item");
+            log.error("SCHEMA_REPOSITORY::create. {}", ex.getMessage());
+            log.trace("SCHEMA_REPOSITORY::create. {}", ex.getMessage(), ex);
+            throw new HttpClientErrorException(HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage());
         }
     }
 

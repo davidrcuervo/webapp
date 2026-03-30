@@ -33,8 +33,8 @@ import static org.hamcrest.Matchers.hasSize;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Import(SchemaTestConfiguration.class)
 @AutoConfigureMockMvc
-class SchemaApplicationTests {
-	private final static Logger log = LoggerFactory.getLogger(SchemaApplicationTests.class);
+class SchemaTests {
+	private final static Logger log = LoggerFactory.getLogger(SchemaTests.class);
 	private final String clazzName = Base64.getUrlEncoder().encodeToString(ItemTypeA.class.getName().getBytes(StandardCharsets.UTF_8));
 
 	@Autowired private Environment env;
