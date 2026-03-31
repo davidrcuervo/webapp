@@ -5,18 +5,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.laetienda.lib.exception.NotValidCustomException;
 import com.laetienda.lib.service.ToolBoxService;
 import com.laetienda.model.schema.DbItem;
-import com.laetienda.schema.repository.DbGroupRepository;
 import com.laetienda.schema.repository.ItemRepository;
 import com.laetienda.schema.repository.SchemaRepository;
 import com.laetienda.utils.service.api.ApiUser;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.graphql.GraphQlProperties;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 
@@ -96,13 +92,13 @@ public class ItemServiceImplementation implements ItemService{
 
             //Persist
             schemaRepo.create(clazz, item);
-            log.trace("SCHEMA_REPO::create $item.id: {}", item.getId());
+            log.trace("SCHEMA_SERVICE::create $item.id: {}", item.getId());
 
             //convert to json string
             return ((T) item);
 
         }catch (JsonProcessingException ex1){
-            log.error("SCHEMA_REPO::create $error: {}", ex1.getMessage());
+            log.error("SCHEMA_SERVICE::create $error: {}", ex1.getMessage());
             log.trace(ex1.getMessage(), ex1);
             throw new NotValidCustomException(ex1.getMessage(), HttpStatus.BAD_REQUEST, "item");
 //        }catch (Exception ex){
@@ -346,14 +342,43 @@ public class ItemServiceImplementation implements ItemService{
 
     private Boolean canEdit(DbItem item){
         String username = request.getUserPrincipal().getName();
-        return username.equals(item.getOwner()) || item.getEditors().contains(username);
+
+        if(username.equals(item.getOwner()))
+            return true;
+
+        if(item.getEditors().contains(username))
+            return true;
+
+        return item.getEditorGroups().stream().anyMatch(editorGroup -> {
+            if(editorGroup.getOwner().equals(username))
+                return true;
+            return editorGroup.getMembers().contains(username);
+        });
     }
 
     private Boolean canRead(DbItem item){
         String username = request.getUserPrincipal().getName();
-        return username.equals(item.getOwner()) ||
-                canEdit(item) ||
-                item.getReaders().contains(username) ||
-                username.equals(serviceUserId);
+
+        if(username.equals(serviceUserId))
+            return true;
+
+        if(username.equals(item.getOwner()))
+            return true;
+
+        if(item.getReaders().contains(username))
+            return true;
+
+        if(item.getReaderGroups().stream().anyMatch(
+                readerGroup -> {
+                    log.trace("ITEM_SERVICE::canRead. $readerGroupOwner: {}", readerGroup.getOwner());
+                    if(readerGroup.getOwner().equals(username))
+                        return true;
+                    return readerGroup.getMembers().contains(username);
+                })
+        ) {
+            return true;
+        }
+
+        return canEdit(item);
     }
 }

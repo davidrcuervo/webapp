@@ -1,13 +1,10 @@
 package com.laetienda.model.schema;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.laetienda.lib.options.DbGroupPolicy;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-import org.checkerframework.common.aliasing.qual.Unique;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -25,14 +22,16 @@ public class DbGroup {
     private String name;
 
     @JsonIgnore
-    @NotNull
-    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    @JoinTable(
-            name = "schema_item_groups",
-            joinColumns = @JoinColumn(name="group_id"),
-            inverseJoinColumns = @JoinColumn(name="item_id")
+    @ManyToMany(
+            mappedBy = "readerGroups"
     )
-    private Set<DbItem> items;
+    private Set<DbItem> readerItems;
+
+    @JsonIgnore
+    @ManyToMany(
+            mappedBy = "editorGroups"
+    )
+    private Set<DbItem> editorItems;
 
     @NotNull
     private String owner;
@@ -98,24 +97,27 @@ public class DbGroup {
         }
     }
 
-    public Set<DbItem> getItems() {
-        if(items == null){
-            items = new HashSet<>();
-        }
-        return items;
+    public Set<DbItem> getReaderItems() {
+        return readerItems;
     }
 
-    public void addItem(DbItem item) {
-        if(items == null){
-            items = new HashSet<>();
+    public void addReaderItem(DbItem item) {
+        if(readerItems == null){
+            readerItems = new HashSet<>();
         }
 
-        items.add(item);
+        readerItems.add(item);
     }
 
-    public void removeItem(DbItem item) {
-        if(items != null){
-            items.remove(item);
+    public Set<DbItem> getEditorItems() {
+        return editorItems;
+    }
+
+    public void addEditorItem(DbItem item) {
+        if(editorItems == null){
+            editorItems = new HashSet<>();
         }
+
+        editorItems.add(item);
     }
 }

@@ -25,6 +25,7 @@ import org.springframework.test.web.servlet.MvcResult;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -53,6 +54,9 @@ class DbGroupTest {
     @Value("${api.schema.group.uri.findByName}")
     private String findByNameUri;
 
+    @Value("${api.schema.find.uri}")
+    private String findTestItemUri;
+
     @Test
     void cycle() throws Exception {
         DbGroup dbg1 = createFirstGroup();
@@ -68,6 +72,7 @@ class DbGroupTest {
 
         ItemTypeA item = getItem();
         item.addReaderGroup(temp);
+        item.setUsername("testItem_createFirstGroup");
 
         //SUCCESSFUL: Create group
         MvcResult response = mvc.perform(post(createUri, clazzName)
@@ -79,6 +84,8 @@ class DbGroupTest {
         ItemTypeA itemResult = json.readValue(response.getResponse().getContentAsString(), ItemTypeA.class);
         assertNotNull(itemResult);
         assertNotNull(itemResult.getId());
+
+        getItem(item.getUsername(), TEST_USER1_JWT);
 
         //Find group by name
         response = mvc.perform(get(findByNameUri, temp.getName())
@@ -102,18 +109,18 @@ class DbGroupTest {
         ItemTypeA item = getItem();
         item.addReaderGroup(temp);
         item.addReaderGroup(dbg);
+        item.setUsername("testItem_createSecondGroup");
 
         //Create second group
-        MvcResult response = mvc.perform(post(createUri, clazzName)
+        mvc.perform(post(createUri, clazzName)
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + TEST_USER2_JWT)
                         .accept(MediaType.APPLICATION_JSON)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json.writeValueAsString(item)))
-                .andExpect(status().isOk()).andReturn();
-        System.out.println(response.getResponse().getContentAsString());
+                .andExpect(status().isOk());
 
         //Find group by name
-        response = mvc.perform(get(findByNameUri, temp.getName())
+        MvcResult response = mvc.perform(get(findByNameUri, temp.getName())
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + TEST_USER2_JWT)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk()).andReturn();
@@ -122,6 +129,8 @@ class DbGroupTest {
         assertNotNull(result.getId());
         assertEquals(temp.getName(), result.getName());
         assertEquals(result.getOwner(), TEST_USER2_ID);
+
+        getItem(item.getUsername(), TEST_USER1_JWT);
 
         return result;
     }
@@ -159,6 +168,10 @@ class DbGroupTest {
 
     @Test
     void createGroupWithRepeatedName() throws Exception {
+        fail();
+    }
+
+    void updateItemAfterAddingGroup() throws Exception {
         fail();
     }
 
@@ -203,5 +216,18 @@ class DbGroupTest {
         item.setUsername("testDbGroup");
 
         return item;
+    }
+
+    private ItemTypeA getItem(String username, String jwtToken) throws Exception {
+        Map<String, String> body = Map.of("username", username);
+
+        MvcResult resp = mvc.perform(post(findTestItemUri, clazzName)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json.writeValueAsString(body)))
+                .andExpect(status().isOk()).andReturn();
+
+        return  json.readValue(resp.getResponse().getContentAsString(), ItemTypeA.class);
     }
 }

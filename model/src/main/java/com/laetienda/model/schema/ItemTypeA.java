@@ -1,7 +1,9 @@
 package com.laetienda.model.schema;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
 
 @Entity
 public class ItemTypeA extends DbItem{
@@ -9,6 +11,9 @@ public class ItemTypeA extends DbItem{
     @Min(18)
     private Integer age;
     private String address;
+
+    @NotNull
+    @Column(unique = true, nullable = false)
     private String username;
 
     public ItemTypeA(){

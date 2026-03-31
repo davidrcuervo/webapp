@@ -1,6 +1,5 @@
 package com.laetienda.model.schema;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.data.annotation.CreatedDate;
@@ -37,10 +36,20 @@ public abstract class DbItem {
     @Column(name = "reader")
     private List<String> readers;
 
-    @ManyToMany(mappedBy = "items")
-    private Set<DbGroup> readersGroups;
+    @ManyToMany
+    @JoinTable(
+            name = "ITEM_READER_GROUP",
+            joinColumns = @JoinColumn(name = "item_id"),
+            inverseJoinColumns = @JoinColumn(name = "reader_group_id")
+    )
+    private Set<DbGroup> readerGroups;
 
-    @ManyToMany(mappedBy = "items")
+    @ManyToMany
+    @JoinTable(
+            name = "ITEM_EDITOR_GROUP",
+            joinColumns = @JoinColumn(name = "item_id"),
+            inverseJoinColumns = @JoinColumn(name = "editor_group_id")
+    )
     private Set<DbGroup> editorGroups;
 
     @CreatedDate
@@ -123,27 +132,21 @@ public abstract class DbItem {
         return this;
     }
 
-    public Set<DbGroup> getReadersGroups() {
-        return readersGroups;
-    }
-
-    public void addReaderGroup(DbGroup group) {
-        if(readersGroups == null){
-            readersGroups = new HashSet<DbGroup>();
-        };
-
-        group.addItem(this);
-        readersGroups.add(group);
-    }
-
-    public void removeReaderGroup(DbGroup group) {
-        if(readersGroups != null){
-            readersGroups.remove(group);
-        }
+    public Set<DbGroup> getReaderGroups() {
+        return readerGroups;
     }
 
     public Set<DbGroup> getEditorGroups() {
         return editorGroups;
+    }
+
+    public void addReaderGroup(DbGroup group) {
+        if(readerGroups == null){
+            readerGroups = new HashSet<DbGroup>();
+        }
+
+        readerGroups.add(group);
+        group.addReaderItem(this);
     }
 
     public void addEditorGroup(DbGroup group) {
@@ -151,8 +154,14 @@ public abstract class DbItem {
             editorGroups = new HashSet<>();
         }
 
-        group.addItem(this);
         editorGroups.add(group);
+        group.addEditorItem(this);
+    }
+
+    public void removeReaderGroup(DbGroup group) {
+        if(readerGroups != null){
+            readerGroups.remove(group);
+        }
     }
 
     public void removeEditorGroup(DbGroup group) {

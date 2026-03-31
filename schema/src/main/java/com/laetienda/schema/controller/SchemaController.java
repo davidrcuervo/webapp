@@ -1,14 +1,17 @@
 package com.laetienda.schema.controller;
 
 import com.laetienda.lib.exception.NotValidCustomException;
+import com.laetienda.model.schema.ItemTypeA;
 import com.laetienda.schema.service.ItemService;
 import com.laetienda.utils.service.api.UserApiDeprecated;
+import org.apache.coyote.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.HttpStatusCodeException;
 
 import java.nio.charset.StandardCharsets;
 import java.security.Principal;

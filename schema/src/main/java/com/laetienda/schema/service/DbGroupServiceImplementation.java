@@ -8,7 +8,6 @@ import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
@@ -16,7 +15,6 @@ import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.HttpStatusCodeException;
 
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 
 @Service
@@ -53,16 +51,37 @@ public class DbGroupServiceImplementation implements DbGroupService {
     @Override
     public void create(DbItem item) throws HttpStatusCodeException {
         String uid = apiUser.getCurrentUserId();
-        processNewItemGroups(item.getReadersGroups(), uid, item, false);
+        processNewItemGroups(item.getReaderGroups(), uid, item, false);
         processNewItemGroups(item.getEditorGroups(), uid, item, true);
     }
 
     void processNewItemGroups(Set<DbGroup> dbGroups, String userId, DbItem item, boolean isEditorList) throws HttpStatusCodeException {
         if(dbGroups != null){
             dbGroups.forEach(group -> {
-                log.trace("DbGROUP_SERVICE::processNewItemGroups. $groupId: {} | $groupName: {}",
+                log.trace("DbGROUP_SERVICE::processNewItemGroups. $groupId: {} | $groupName: {} | isEditorList: {}",
                         group.getId(),
-                        group.getName());
+                        group.getName(),
+                        isEditorList
+                );
+
+                if(isEditorList) {
+                    if(group.getEditorItems() != null && group.getEditorItems().contains(item)) {
+                        log.trace("DbGROUP_SERVICE::processNewItemGroups. Item already exists in editor group");
+                    }else{
+                        group.addEditorItem(item);
+                    }
+                } else {
+                    if (group.getReaderItems() != null && group.getReaderItems().contains(item)) {
+                        log.trace("DbGROUP_SERVICE::processNewItemGroups. Item already exists in reader group");
+                    } else {
+                        group.addReaderItem(item);
+                    }
+                }
+
+                log.trace("DbGROUP_SERVICE::processNewItemGroups. No. Of items: {}", group.getReaderItems().size());
+                group.getReaderItems().forEach(i -> {
+                    log.trace("DbGROUP_SERVICE::processNewItemGroups. id: {} | owner: {}", i.getId(), i.getOwner());
+                });
 
                 if(group.getId() == null){
 
@@ -80,23 +99,22 @@ public class DbGroupServiceImplementation implements DbGroupService {
                         throw new HttpClientErrorException(HttpStatus.BAD_REQUEST, "Invalid owner");
                     }
 
-                    if(!group.getItems().contains(item)){
-                        group.addItem(item);
-                    }
+//                    if(!group.getItems().contains(item)){
+//                        group.addItem(item);
+//                    }
 
                     repo.save(group);
 
-                }else{
-
-                    repo.findById(group.getId()).ifPresent(g -> {
-
-                        if(isEditorList){
-                            item.addEditorGroup(group);
-                        }else{
-                            item.addReaderGroup(group);
-                        }
-                    });
                 }
+//                else{
+//                    repo.findById(group.getId()).ifPresent(g -> {
+//                if(isEditorList){
+//                    item.addEditorGroup(group);
+//                }else{
+//                    item.addReaderGroup(group);
+//                }
+//                    });
+//                }
 
                if(!isValid(group)){
                    log.error("DbGROUP_SERVICE::processNewItemGroups. This message should never happen");
