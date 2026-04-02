@@ -329,7 +329,7 @@ public class ItemServiceImplementation implements ItemService{
             }
 
         }catch(HttpClientErrorException ex){
-            if(ex.getStatusCode() == HttpStatus.NOT_FOUND){
+            if(ex.getStatusCode().is4xxClientError()){
                 String message = "ITEM_SERVICE::verifyReadersAndEditors. Owner, reader or editor does not exist.";
                 log.info(message);
                 throw new NotValidCustomException(message, HttpStatus.BAD_REQUEST, "item");

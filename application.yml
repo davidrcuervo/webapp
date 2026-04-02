@@ -42,7 +42,7 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: ${api.kc}
+          issuer-uri: ${api.kc.realm.uri}
       client:
         registration:
           webapp:
@@ -53,7 +53,7 @@ spring:
             provider: keycloaket
         provider:
           keycloaket:
-            issuer-uri: ${api.kc}
+            issuer-uri: ${api.kc.realm.uri}
             user-name-attribute: preferred_username
 
 #Keycloak

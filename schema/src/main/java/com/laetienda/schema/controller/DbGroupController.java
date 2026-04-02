@@ -34,7 +34,7 @@ public class DbGroupController {
         return ResponseEntity.ok(service.update(groupId, body));
     }
 
-    @DeleteMapping("${api.schema.group.file.update}") //group/{groupId}/delete
+    @DeleteMapping("${api.schema.group.file.delete}") //group/{groupId}/delete
     public ResponseEntity<Void> delete(@PathVariable String groupId) throws HttpStatusCodeException {
         log.info("DbGROUP_CONTROLLER::delete. $groupId: {}", groupId);
         service.delete(groupId);

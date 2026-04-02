@@ -1,9 +1,23 @@
 api:
   kc:
-    admin:
-      user:
-        byUsername: ${api.kc.admin}/users?username={username}&exact=true
-        byUserId: ${api.kc.admin}/users/{userId}
+    url: https://${KC_PUBLIC_ADDRESS}
+    realm:
+      name: etrealm
+      file: /realms/${api.kc.realm.name}
+      uri: ${api.kc.url}${api.kc.realm.file}
+      account: ${api.kc.realm.uri}/account
+      token:
+        file: /protocol/openid-connect/token
+        uri: ${api.kc.realm.uri}${api.kc.realm.token.file}
+      admin:
+        file: /admin${api.kc.realm.file}
+        uri: ${api.kc.url}${api.kc.realm.admin.file}
+        user:
+          create: ${api.kc.realm.admin.uri}/users
+          byUsername: ${api.kc.realm.admin.uri}/users?username={username}&exact=true
+          byUserId: ${api.kc.realm.admin.uri}/users/{userId}
+        role:
+          users: ${api.kc.realm.admin.uri}/roles/{roleName}/users
   kcUser:
     server: http://etuser:${PORT_USUARIO}
     folder: /api/v0/user

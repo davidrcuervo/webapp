@@ -44,6 +44,14 @@ public class DbGroup {
     @CollectionTable(name="ITEM_GROUP_MEMBER", joinColumns = @JoinColumn(name = "ITEM_GROUP_ID"))
     private Set<String> members;
 
+    public DbGroup() {
+
+    }
+
+    public DbGroup(String name){
+        this.setName(name);
+    }
+
     public Long getId() {
         return id;
     }

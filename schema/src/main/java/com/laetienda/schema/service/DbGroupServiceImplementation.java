@@ -1,8 +1,11 @@
 package com.laetienda.schema.service;
 
+import com.laetienda.lib.options.DbGroupPolicy;
 import com.laetienda.model.schema.DbGroup;
 import com.laetienda.model.schema.DbItem;
 import com.laetienda.schema.repository.DbGroupRepository;
+import com.laetienda.schema.repository.ItemRepository;
+import com.laetienda.schema.repository.SchemaRepository;
 import com.laetienda.utils.service.api.ApiUser;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
@@ -15,21 +18,26 @@ import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.HttpStatusCodeException;
 
 import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.Set;
 
 @Service
 public class DbGroupServiceImplementation implements DbGroupService {
     private final static Logger log = LoggerFactory.getLogger(DbGroupServiceImplementation.class);
 
-    private final DbGroupRepository repo;
+    private final DbGroupRepository groupRepo;
+    private final ItemRepository itemRepo;
     private final ApiUser apiUser;
     private final Validator validator;
 
     DbGroupServiceImplementation(
             DbGroupRepository dbGroupRepository,
+            ItemRepository itemRepository,
             Validator validator,
             ApiUser apiUser) {
-        this.repo = dbGroupRepository;
+        this.groupRepo = dbGroupRepository;
+        this.itemRepo = itemRepository;
         this.validator = validator;
         this.apiUser = apiUser;
     }
@@ -37,7 +45,7 @@ public class DbGroupServiceImplementation implements DbGroupService {
     @Override
     public DbGroup findByName(String name) throws HttpStatusCodeException {
         log.debug("DbGROUP_SERVICE::findByName. $name: {}", name);
-        DbGroup result = repo.findByName(name);
+        DbGroup result = groupRepo.findByName(name);
 
         if (result == null) {
             String message = String.format("Group, with that name, does not exist: %s", name);
@@ -78,14 +86,9 @@ public class DbGroupServiceImplementation implements DbGroupService {
                     }
                 }
 
-                log.trace("DbGROUP_SERVICE::processNewItemGroups. No. Of items: {}", group.getReaderItems().size());
-                group.getReaderItems().forEach(i -> {
-                    log.trace("DbGROUP_SERVICE::processNewItemGroups. id: {} | owner: {}", i.getId(), i.getOwner());
-                });
-
                 if(group.getId() == null){
 
-                    if(repo.findByName(group.getName()) != null){
+                    if(groupRepo.findByName(group.getName()) != null){
                         String message = String.format("A group with that name already exist. $name: %s", group.getName());
                         log.warn("DbGROUP_SERVICE::processNewItemGroups. {}", message);
                         throw new HttpClientErrorException(HttpStatus.BAD_REQUEST, message);
@@ -99,33 +102,19 @@ public class DbGroupServiceImplementation implements DbGroupService {
                         throw new HttpClientErrorException(HttpStatus.BAD_REQUEST, "Invalid owner");
                     }
 
-//                    if(!group.getItems().contains(item)){
-//                        group.addItem(item);
-//                    }
-
-                    repo.save(group);
-
+                    if(isValid(group)) {
+                        groupRepo.save(group);
+                    }else{
+                        log.error("DbGROUP_SERVICE::processNewItemGroups. This message should never happen");
+                    }
                 }
-//                else{
-//                    repo.findById(group.getId()).ifPresent(g -> {
-//                if(isEditorList){
-//                    item.addEditorGroup(group);
-//                }else{
-//                    item.addReaderGroup(group);
-//                }
-//                    });
-//                }
-
-               if(!isValid(group)){
-                   log.error("DbGROUP_SERVICE::processNewItemGroups. This message should never happen");
-               }
             });
         }
     }
 
     @Override
     public boolean isValid(DbGroup dbGroup) throws HttpStatusCodeException {
-        log.info("DbGROUP_SERVICE::isValid");
+        log.debug("DbGROUP_SERVICE::isValid");
 
         String message;
 
@@ -137,16 +126,21 @@ public class DbGroupServiceImplementation implements DbGroupService {
         Set<ConstraintViolation<DbGroup>> violations = validator.validate(dbGroup);
         if(!violations.isEmpty()){
 
-            violations.forEach(violation -> {
+            violations.forEach(v -> {
                 log.trace("DbGROUP_SERVICE::isValid. $groupName: {} | {} | {} | {}",
                         dbGroup.getName(),
-                        violation.getPropertyPath(),
-                        violation.getInvalidValue(),
-                        violation.getMessage());
+                        v.getPropertyPath(),
+                        v.getInvalidValue(),
+                        v.getMessage());
             });
 
-            message = violations.iterator().next().getMessage();
-            log.warn("DbGROUP_SERVICE::isValid. dbGroup is not valid. | $message: {}", message);
+            ConstraintViolation<DbGroup> violation = violations.iterator().next();
+            message = String.format("Item group is not valid: %s | %s | %s",
+                    violation.getPropertyPath().toString(),
+                    violation.getInvalidValue(),
+                    violation.getMessage()
+                    );
+            log.warn("DbGROUP_SERVICE::isValid. {}", message);
             throw new HttpClientErrorException(HttpStatus.BAD_REQUEST, message);
         }
 
@@ -165,7 +159,45 @@ public class DbGroupServiceImplementation implements DbGroupService {
 
     @Override
     public void delete(String groupId) throws HttpStatusCodeException {
-        throw new HttpServerErrorException(HttpStatus.NOT_IMPLEMENTED);
+        log.debug("DbGROUP_SERVICE::delete $groupId: {}", groupId);
+
+        try {
+            Long gid = Long.parseLong(groupId);
+
+            groupRepo.findById(gid).ifPresent(group -> {
+                if (canEdit(group)) {
+
+                    group.getEditorItems().forEach(item -> {
+                        itemRepo.findById(item.getId()).ifPresent(editorItem -> {
+                            editorItem.removeEditorGroup(group);
+                            itemRepo.save(item);
+                        });
+                    });
+
+                    group.getReaderItems().forEach(item -> {
+                        itemRepo.findById(item.getId()).ifPresent(readerItem -> {
+                            readerItem.removeReaderGroup(group);
+                            itemRepo.save(item);
+                        });
+                    });
+
+                    groupRepo.delete(group);
+
+                } else {
+                    String message = String.format("You don't have privileges to edit group. $groupId: %s", groupId);
+                    log.warn("DbGROUP_SERVICE::delete. {}", message);
+                    throw new HttpClientErrorException(HttpStatus.UNAUTHORIZED, message);
+                }
+            });
+
+        }catch(NoSuchElementException e){
+            log.debug("DbGROUP_SERVICE::delete. $groupId: {} | $message: {}", groupId, e.getMessage());
+            throw new HttpClientErrorException(HttpStatus.NOT_FOUND, e.getMessage());
+
+        }catch(NumberFormatException e){
+            log.debug("DbGROUP_SERVICE::delete.. $groupId: {} | $message: {}", groupId, e.getMessage());
+            throw new HttpClientErrorException(HttpStatus.BAD_REQUEST, e.getMessage());
+        }
     }
 
     @Override
@@ -200,5 +232,24 @@ public class DbGroupServiceImplementation implements DbGroupService {
         }
 
         return null;
+    }
+
+    private boolean canEdit(DbGroup dbGroup) throws HttpStatusCodeException {
+        String uid = apiUser.getCurrentUserId();
+
+        if(dbGroup.getOwner().equals(uid))
+            return true;
+
+        if (dbGroup.getPolicy().equals(DbGroupPolicy.MANAGE_BY_OWNER_ONLY))
+            return false;
+
+        else if(dbGroup.getPolicy().equals(DbGroupPolicy.MANAGE_BY_ALL))
+            return dbGroup.getMembers().contains(uid);
+
+        else{
+            String message = String.format("SEVERE | Group contains an undefined policy. $groupPolicy: %s", dbGroup.getPolicy().toString());
+            log.error("DbGROUP_SERVICE::canEdit. {}", message);
+            throw new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR, message);
+        }
     }
 }

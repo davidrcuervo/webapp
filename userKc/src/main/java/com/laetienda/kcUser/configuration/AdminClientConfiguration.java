@@ -29,7 +29,7 @@ public class AdminClientConfiguration {
         log.trace("CONFIGURATION_kcAdminClient. $secret: {}", secret);
         return KeycloakBuilder.builder()
                 .serverUrl(env.getProperty("api.kc.url", "https://localhost:8443"))
-                .realm(env.getProperty("api.kc.realm", "master"))
+                .realm(env.getProperty("api.kc.realm.file", "master"))
                 .grantType(OAuth2Constants.CLIENT_CREDENTIALS)
                 .clientId(env.getProperty("kc.user.client.id", "frontend-client-id"))
                 .clientSecret(secret)

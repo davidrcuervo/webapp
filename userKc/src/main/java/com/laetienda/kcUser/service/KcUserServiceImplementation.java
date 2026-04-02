@@ -35,7 +35,7 @@ public class KcUserServiceImplementation implements KcUserService{
 
     private final Keycloak keycloak;
 
-    @Value("${api.kc.realm}")
+    @Value("${api.kc.realm.uri}")
     private String realm;
 
     @Autowired private KcUserRepository repo;
@@ -119,6 +119,18 @@ public class KcUserServiceImplementation implements KcUserService{
             throw new HttpClientErrorException(HttpStatus.NOT_FOUND, message);
         }
 
+        List<KcUser> tempUsers = repo.findRoleUsers("role_service");
+        tempUsers.stream().forEach(u -> {
+            log.trace("USER_SERVICE::isUserValid. $userName: {} | $userId: {}", u.getUsername(), u.getId());
+        });
+
+        if(tempUsers.stream()
+                .anyMatch(u -> u.getId().equals(user.getId()))){
+            String message = String.format("User, %s, is service account", user.getId());
+            log.info("USER_SERVICE::isUserValid. {}", message);
+            throw new HttpClientErrorException(HttpStatus.UNAUTHORIZED, message);
+        }
+
         if(!user.isEnabled()){
             String message = String.format("User, %s, is not enabled", user.getId());
             log.info("USER_SERVICE::isUserValid. {}", message);
@@ -145,19 +157,19 @@ public class KcUserServiceImplementation implements KcUserService{
         }
 
         List<KcUser> temp = repo.findByUsername(user.getUsername());
-        if(temp == null || temp.isEmpty() || temp.size() == 0){
+        if(temp == null || temp.isEmpty()){
             UserRepresentation userRepresentation = getUserRepresentation(user);
 
-            try (Response resp = keycloak.realm(realm).users().create(userRepresentation)) {
+//            try (Response resp = keycloak.realm(realm).users().create(userRepresentation)) {
+//                            if (resp.getStatus() != HttpStatus.CREATED.value()) {
+//                    String message = resp.getEntity().toString();
+//                    log.error("USER_SERVICE::createUser. Failed to save user in Keycloak. $code: {} - $error: {}", resp.getStatus(), message);
+//                    throw new NotValidCustomException(message, HttpStatus.valueOf(resp.getStatus()), "user");
+//                }
+//            }
 
-                if (resp.getStatus() != HttpStatus.CREATED.value()) {
-                    String message = resp.getEntity().toString();
-                    log.error("USER_SERVICE::createUser. Failed to save user in Keycloak. $code: {} - $error: {}", resp.getStatus(), message);
-                    throw new NotValidCustomException(message, HttpStatus.valueOf(resp.getStatus()), "user");
-                }
-
-                return repo.findByUsername(user.getUsername()).getFirst();
-            }
+            repo.create(userRepresentation);
+            return repo.findByUsername(user.getUsername()).getFirst();
 
         }else {
             String message = String.format("Username, %s, already exists.", user.getUsername());
@@ -210,20 +222,22 @@ public class KcUserServiceImplementation implements KcUserService{
             throw new HttpClientErrorException(HttpStatus.UNAUTHORIZED, "User, ");
         }
 
-        try(Response resp = keycloak.realm(realm).users().delete(userId)){
+        repo.delete(userId);
 
-            if(resp.getStatus() != HttpStatus.NO_CONTENT.value()){
-                HttpStatusCode httpStatus = HttpStatus.valueOf(resp.getStatus());
-                String statusText = resp.getStatusInfo().getReasonPhrase();
-
-                if(httpStatus.is4xxClientError()){
-                    throw new HttpClientErrorException(httpStatus, statusText);
-                }
-
-                if(httpStatus.is5xxServerError()){
-                    throw new HttpServerErrorException(httpStatus, statusText);
-                }
-            }
-        }
+//        try(Response resp = keycloak.realm(realm).users().delete(userId)){
+//
+//            if(resp.getStatus() != HttpStatus.NO_CONTENT.value()){
+//                HttpStatusCode httpStatus = HttpStatus.valueOf(resp.getStatus());
+//                String statusText = resp.getStatusInfo().getReasonPhrase();
+//
+//                if(httpStatus.is4xxClientError()){
+//                    throw new HttpClientErrorException(httpStatus, statusText);
+//                }
+//
+//                if(httpStatus.is5xxServerError()){
+//                    throw new HttpServerErrorException(httpStatus, statusText);
+//                }
+//            }
+//        }
     }
 }

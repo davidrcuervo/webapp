@@ -175,10 +175,8 @@ class SchemaTests {
 				.with(jwt().jwt(jwt -> jwt.claim("sub", testUserId)))
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(mapper.writeValueAsBytes(body)))
-				.andExpect(status().isOk())
+				.andExpect(status().isNoContent())
 				.andReturn();
-
-		assertTrue(Boolean.parseBoolean(response.getResponse().getContentAsString()));
 
 		String findAddress = env.getProperty("api.schema.find.uri");
 		assertNotNull(address);
@@ -253,7 +251,7 @@ class SchemaTests {
 		//delete by using owner editor
 		mvc.perform(MockMvcRequestBuilders.delete(deleteAddress, item.getId(), clazzName)
 				.with(jwt().jwt(jwt -> jwt.claim("sub", adminUserId))))
-				.andExpect(status().isOk());
+				.andExpect(status().isNoContent());
 	}
 
 	@Test void setReader() throws Exception{
@@ -321,7 +319,7 @@ class SchemaTests {
 				.with(jwt().jwt(jwt -> jwt.claim("sub", adminUserId)))
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(mapper.writeValueAsBytes(body)))
-				.andExpect(status().isOk());
+				.andExpect(status().isNoContent());
 	}
 
 	@Test void readByBackend() throws Exception {
@@ -352,7 +350,7 @@ class SchemaTests {
         //remove test item
         mvc.perform(MockMvcRequestBuilders.delete(deleteAddress, itemResponse.getId(), clazzName)
                         .with(jwt().jwt(jwt -> jwt.claim("sub", testUserId))))
-                .andExpect(status().isOk());
+                .andExpect(status().isNoContent());
     }
 
 	@Test void createWithDifferentOwner() throws Exception{
@@ -418,7 +416,7 @@ class SchemaTests {
 
 		mvc.perform(MockMvcRequestBuilders.delete(deleteAddress, itemResponse.getId(), clazzName)
 						.with(jwt().jwt(jwt -> jwt.claim("sub", testUserId))))
-				.andExpect(status().isOk());
+				.andExpect(status().isNoContent());
 	}
 
 	@Test void deleteUser() throws Exception {
@@ -461,7 +459,7 @@ class SchemaTests {
 						.authorities(new SimpleGrantedAuthority("role_manager"))
 						.jwt(jwt -> jwt
 						.claim("sub", adminUserId))))
-				.andExpect(status().isOk());
+				.andExpect(status().isNoContent());
 
 		mvc.perform(get(findByIdAddress, itemResponse.getId(), clazzName)
 						.with(jwt().jwt(jwt -> jwt.claim("sub", testUserId))))
@@ -475,7 +473,7 @@ class SchemaTests {
 
 		mvc.perform(delete(deleteAddress, itemResponse.getId(), clazzName)
 				.with(jwt().jwt(jwt -> jwt.claim("sub", adminUserId))))
-				.andExpect(status().isOk());
+				.andExpect(status().isNoContent());
 	}
 
     @Test
@@ -505,7 +503,7 @@ class SchemaTests {
         //delete item
         mvc.perform(delete(deleteAddress, itemId, clazzName)
 				.with(jwt().jwt(jwt -> jwt.claim("sub", adminUserId))))
-				.andExpect(status().isOk());
+				.andExpect(status().isNoContent());
 
         //test if item is invalid
         mvc.perform(get(address, itemId, clazzName)
@@ -543,7 +541,7 @@ class SchemaTests {
         mvc.perform(delete(deleteAddress, itemId, clazzName)
                 .with(jwt().jwt(jwt -> jwt.claim("sub", testUserId)))
                 .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk());
+                .andExpect(status().isNoContent());
     }
 
     @Test
@@ -593,11 +591,11 @@ class SchemaTests {
         for(ItemTypeA item : items) {
             mvc.perform(delete(deleteAddress, item.getId(), clazzName)
                             .with(jwt().jwt(jwt -> jwt.claim("sub", testUserId))))
-                    .andExpect(status().isOk());
+                    .andExpect(status().isNoContent());
         }
 
         mvc.perform(delete(deleteAddress, item3.getId(), clazzName)
                 .with(jwt().jwt(jwt -> jwt.claim("sub", adminUserId))))
-                .andExpect(status().isOk());
+                .andExpect(status().isNoContent());
     }
 }

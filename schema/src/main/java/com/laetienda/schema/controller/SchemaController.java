@@ -114,14 +114,14 @@ public class SchemaController {
     }
 
     @PostMapping("${api.schema.delete.file}")
-    public ResponseEntity<Boolean> delete(@RequestParam String clase, @RequestBody Map<String, String> body) throws NotValidCustomException{
+    public ResponseEntity<Void> delete(@RequestParam String clase, @RequestBody Map<String, String> body) throws NotValidCustomException{
         String clazzName = new String(Base64.getUrlDecoder().decode(clase.getBytes()), StandardCharsets.UTF_8);
         log.debug("SCHEMA_CONTROLLER::delete $clazzName: {}", clazzName);
 
         try {
             Class<?> clazz = Class.forName(clazzName);
             itemService.delete(clazz, body);
-            return ResponseEntity.ok(true);
+            return ResponseEntity.noContent().build();
         } catch (ClassNotFoundException e) {
             log.error(e.getMessage());
             log.trace(e.getMessage(), e);
@@ -130,14 +130,14 @@ public class SchemaController {
     }
 
     @DeleteMapping("${api.schema.deleteById.file}") //api/v0/schema/delete/{id}?clase={clazzName}
-    public ResponseEntity<Boolean> deleteById(@RequestParam String clase, @PathVariable Long id) throws NotValidCustomException{
+    public ResponseEntity<Void> deleteById(@RequestParam String clase, @PathVariable Long id) throws NotValidCustomException{
         String clazzName = new String(Base64.getUrlDecoder().decode(clase.getBytes()), StandardCharsets.UTF_8);
         log.debug("SCHEMA_CONTROLLER::deleteById $clazzName: {}, $id: {}", clazzName, id);
 
         try {
             Class clazz = Class.forName(clazzName);
             itemService.deleteById(clazz, id);
-            return ResponseEntity.ok(true);
+            return ResponseEntity.noContent().build();
         } catch (ClassNotFoundException e) {
             log.error(e.getMessage());
             log.trace(e.getMessage(), e);
@@ -160,8 +160,9 @@ public class SchemaController {
     }
 
     @DeleteMapping("${api.schema.deleteUserById.file}")
-    public ResponseEntity<Boolean> deleteUserById(@PathVariable String userId) throws NotValidCustomException{
+    public ResponseEntity<Void> deleteUserById(@PathVariable String userId) throws NotValidCustomException{
         log.debug("SCHEMA_CONROLLER::deleteUserById: $userId: {}", userId);
-        return ResponseEntity.ok(itemService.deleteUserById(userId));
+        itemService.deleteUserById(userId);
+        return ResponseEntity.noContent().build();
     }
 }

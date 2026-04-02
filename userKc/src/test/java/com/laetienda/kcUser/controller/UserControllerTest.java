@@ -165,10 +165,10 @@ class UserControllerTest {
                         .with(jwt().authorities(new SimpleGrantedAuthority("role_service"))))
                 .andExpect(status().isNotFound());
 
-        //Test service account. Should return 404 not found
+        //Test service account.
         mvc.perform(get(address, service)
                         .with(jwt().authorities(new SimpleGrantedAuthority("role_service"))))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
@@ -192,7 +192,7 @@ class UserControllerTest {
 
         mvc.perform(get(address, serviceUserId)
                         .with(jwt().authorities(new SimpleGrantedAuthority("role_service"))))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isUnauthorized());
 
         mvc.perform(get(address, "invalid-service-id")
                         .with(jwt().authorities(new SimpleGrantedAuthority("role_service"))))

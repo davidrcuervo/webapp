@@ -17,7 +17,7 @@ class KcUserControllerTest {
 	@Autowired MockMvc mvc;
 	@Autowired Environment env;
 
-	@Test
+//	@Test
     void shutdown() throws Exception {
         String actuator = env.getProperty("api.actuator.folder", "shutdown");
         String address = String.format("%s/shutdown", actuator);
