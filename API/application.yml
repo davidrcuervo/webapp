@@ -9,6 +9,7 @@ api:
       token:
         file: /protocol/openid-connect/token
         uri: ${api.kc.realm.uri}${api.kc.realm.token.file}
+      certs: ${api.kc.realm.uri}/protocol/openid-connect/certs
       admin:
         file: /admin${api.kc.realm.file}
         uri: ${api.kc.url}${api.kc.realm.admin.file}

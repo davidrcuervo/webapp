@@ -17,7 +17,7 @@ public class DbGroup {
     private Long id;
 
     @NotNull
-    @Size(min=1, max = 32)
+    @Size(min=1, max = 128)
     @Column(unique = true, nullable = false)
     private String name;
 
@@ -60,8 +60,9 @@ public class DbGroup {
         return name;
     }
 
-    public void setName(String name) {
+    public DbGroup setName(String name) {
         this.name = name;
+        return this;
     }
 
     public String getOwner() {
@@ -76,8 +77,9 @@ public class DbGroup {
         return policy;
     }
 
-    public void setPolicy(DbGroupPolicy policy) {
+    public DbGroup setPolicy(DbGroupPolicy policy) {
         this.policy = policy;
+        return this;
     }
 
     public Set<String> getMembers() {

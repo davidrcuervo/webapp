@@ -2,12 +2,14 @@ package com.laetienda.schema;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.laetienda.lib.options.DbGroupPolicy;
+import com.laetienda.model.kc.KcToken;
 import com.laetienda.model.kc.KcUser;
 import com.laetienda.model.schema.DbGroup;
 import com.laetienda.model.schema.ItemTypeA;
 import com.laetienda.model.user.TestUserDto;
 import com.laetienda.model.user.Usuario;
 import com.laetienda.utils.service.api.ApiUser;
+import org.hibernate.cache.spi.support.AbstractReadWriteAccess;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -19,16 +21,25 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.oauth2.client.OAuth2AuthorizeRequest;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.web.client.RestClient;
 
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.springframework.security.oauth2.client.web.client.RequestAttributeClientRegistrationIdResolver.clientRegistrationId;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -48,15 +59,21 @@ class DbGroupTest {
 	@Autowired private MockMvc mvc;
 	@Autowired private ObjectMapper json;
     @Autowired private ApiUser apiUser;
+    @Autowired private RestClient client;
+    @Autowired private OAuth2AuthorizedClientManager authorizedClientManager;
 
     @Value("${api.schema.create.uri}")
     private String createUri;
 
+    @Value("${api.schema.find.uri}")
+    private String findTestItemUri;
+
+    @Value("${api.schema.update.uri}")
+    private String updateTestItemUri;
+
     @Value("${api.schema.group.uri.findByName}")
     private String findGroupByNameUri;
 
-    @Value("${api.schema.find.uri}")
-    private String findTestItemUri;
 
     private void build(int numberOfEntries, String name){
 
@@ -148,10 +165,15 @@ class DbGroupTest {
         String deleteGroupUri = env.getProperty("api.schema.group.uri.delete");
         assertNotNull(deleteGroupUri);
 
-        String deleteItemUri = env.getProperty("api.schema.deleteById.uri");
-        assertNotNull(deleteItemUri);
-
         for(int i=1; i < groups.length; i++){
+
+            if(groups[i].getId() == null) {
+                MvcResult resp = mvc.perform(get(findGroupByNameUri, groups[i].getName())
+                                .header(HttpHeaders.AUTHORIZATION, "Bearer " + USERS[1].getToken()))
+                        .andExpect(status().isOk()).andReturn();
+                groups[i] = json.readValue(resp.getResponse().getContentAsString(), DbGroup.class);
+            }
+
             mvc.perform(get(findGroupByNameUri, groups[i].getName())
                             .header(HttpHeaders.AUTHORIZATION, "Bearer " + USERS[i].getToken())
                             .accept(MediaType.APPLICATION_JSON))
@@ -168,26 +190,33 @@ class DbGroupTest {
         }
 
         for(int i=1; i < items.length; i++){
-            Map<String, String> body = Map.of("username", items[i].getUsername());
-
-            mvc.perform(post(findTestItemUri, clazzName)
-                            .header(HttpHeaders.AUTHORIZATION, "Bearer " + USERS[i].getToken())
-                            .accept(MediaType.APPLICATION_JSON)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(json.writeValueAsString(body)))
-                    .andExpect(status().isOk());
-
-            mvc.perform(delete(deleteItemUri, items[i].getId(), clazzName)
-                            .header(HttpHeaders.AUTHORIZATION, "Bearer " + USERS[i].getToken()))
-                    .andExpect(status().isNoContent());
-
-            mvc.perform(post(findTestItemUri, clazzName)
-                            .header(HttpHeaders.AUTHORIZATION, "Bearer " + USERS[i].getToken())
-                            .accept(MediaType.APPLICATION_JSON)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(json.writeValueAsString(body)))
-                    .andExpect(status().isNotFound());
+            deleteItem(i);
         }
+    }
+
+    private void deleteItem(int id) throws Exception {
+        String deleteItemUri = env.getProperty("api.schema.deleteById.uri");
+        assertNotNull(deleteItemUri);
+
+        Map<String, String> body = Map.of("username", items[id].getUsername());
+
+        mvc.perform(post(findTestItemUri, clazzName)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + USERS[id].getToken())
+                        .accept(MediaType.APPLICATION_JSON)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json.writeValueAsString(body)))
+                .andExpect(status().isOk());
+
+        mvc.perform(delete(deleteItemUri, items[id].getId(), clazzName)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + USERS[id].getToken()))
+                .andExpect(status().isNoContent());
+
+        mvc.perform(post(findTestItemUri, clazzName)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + USERS[id].getToken())
+                        .accept(MediaType.APPLICATION_JSON)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json.writeValueAsString(body)))
+                .andExpect(status().isNotFound());
     }
 
     @Test
@@ -207,23 +236,138 @@ class DbGroupTest {
     @Test
     void createWithWrongUserIdList() throws Exception {
         build(1, "createWithWrongUserIdList");
-        //TODO: Try to create group with service-account. It should not be allowed
-        fail();
+
+        groups[1].setPolicy(DbGroupPolicy.MANAGE_BY_ALL).addMember(USERS[0].userId);
+        items[1].addReaderGroup(groups[1]);
+
+        mvc.perform(post(createUri,clazzName)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + USERS[1].getToken())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json.writeValueAsString(items[1])))
+                .andExpect(status().isBadRequest());
+
+        groups[1].removeMember(USERS[0].userId);
+        groups[1].addMember("not-valid-user-id");
+
+        mvc.perform(post(createUri,clazzName)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + USERS[1].getToken())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json.writeValueAsString(items[1])))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void createGroupWithServiceAccount() throws Exception {
+        build(1,  "createGroupWithServiceAccount");
+
+        mvc.perform(post(createUri,clazzName)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + USERS[0].getToken())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json.writeValueAsString(items[1])))
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
     void createGroupWithOwner() throws Exception{
-        fail();
+        build(1,  "createGroupWithOwner");
+
+        items[1].setOwner(USERS[1].getUserId());
+        groups[1].setOwner(USERS[1].getUserId());
+        items[1].addReaderGroup(groups[1]);
+
+        mvc.perform(post(createUri,clazzName)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + USERS[1].getToken())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json.writeValueAsString(items[1])))
+                .andExpect(status().isBadRequest());
     }
 
     @Test
     void createGroupWithRepeatedName() throws Exception {
-        fail();
+        build(2, "createGroupWithRepeatedName");
+
+        groups[1].setName("testDbGroup_createGroupWithRepeatedName").setPolicy(DbGroupPolicy.MANAGE_BY_OWNER_ONLY);
+        groups[2].setName("testDbGroup_createGroupWithRepeatedName").setPolicy(DbGroupPolicy.MANAGE_BY_OWNER_ONLY);
+        items[1].addReaderGroup(groups[1]);
+        items[1].addReaderGroup(groups[2]);
+
+        mvc.perform(post(createUri,clazzName)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + USERS[1].getToken())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json.writeValueAsString(items[1])))
+                .andExpect(status().isBadRequest());
+
+        mvc.perform(get(findGroupByNameUri, groups[1].getName())
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + USERS[1].getToken()))
+                .andExpect(status().isNotFound());
+
+        deleteEntries();
     }
 
     @Test
-    void updateItemAfterAddingGroup() throws Exception {
-        fail();
+    void updateItemAfterAddingNewGroup() throws Exception {
+        build(1, "updateItemAfterAddingGroup");
+
+        MvcResult resp = mvc.perform(post(createUri,clazzName)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + USERS[1].getToken())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .content(json.writeValueAsString(items[1])))
+                .andExpect(status().isOk()).andReturn();
+        items[1] = json.readValue(resp.getResponse().getContentAsString(), ItemTypeA.class);
+        groups[1].setPolicy(DbGroupPolicy.MANAGE_BY_OWNER_ONLY);
+        items[1].addReaderGroup(groups[1]);
+
+        mvc.perform(put(updateTestItemUri, clazzName)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + USERS[1].getToken())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json.writeValueAsBytes(items[1])))
+                .andExpect(status().isBadRequest());
+
+        deleteItem(1);
+    }
+
+    @Test
+    void updateItemAfterAddingExistingGroup() throws Exception {
+        build(2, "updateItemAfterAddingExistingGroup");
+
+        groups[1].setPolicy(DbGroupPolicy.MANAGE_BY_OWNER_ONLY);
+        items[1].addEditorGroup(groups[1]);
+
+        groups[2].setPolicy(DbGroupPolicy.MANAGE_BY_OWNER_ONLY);
+        items[2].addEditorGroup(groups[2]);
+
+        MvcResult resp = mvc.perform(post(createUri,clazzName)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + USERS[1].getToken())
+                        .accept(MediaType.APPLICATION_JSON)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json.writeValueAsString(items[1])))
+                .andExpect(status().isOk()).andReturn();
+        items[1] = json.readValue(resp.getResponse().getContentAsString(), ItemTypeA.class);
+
+        resp = mvc.perform(get(findGroupByNameUri, groups[1].getName())
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + USERS[1].getToken()))
+                .andExpect(status().isOk()).andReturn();
+        groups[1] = json.readValue(resp.getResponse().getContentAsString(), DbGroup.class);
+
+        resp = mvc.perform(post(createUri,clazzName)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + USERS[2].getToken())
+                        .accept(MediaType.APPLICATION_JSON)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json.writeValueAsString(items[2])))
+                .andExpect(status().isOk()).andReturn();
+        items[2] = json.readValue(resp.getResponse().getContentAsString(), ItemTypeA.class);
+
+        items[2].addEditorGroup(groups[1]);
+
+        mvc.perform(put(updateTestItemUri, clazzName)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + USERS[2].getToken())
+                        .accept(MediaType.APPLICATION_JSON)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json.writeValueAsString(items[2])))
+                .andExpect(status().isBadRequest());
+
+        deleteEntries();
     }
 
     @Test
@@ -237,7 +381,10 @@ class DbGroupTest {
     }
 
     @BeforeAll
-    static void setup(@Autowired ApiUser apiUser, @Autowired Environment env) throws Exception {
+    static void setup(
+            @Autowired ApiUser apiUser,
+            @Autowired Environment env,
+            @Autowired OAuth2AuthorizedClientManager authorizedClientManager) throws Exception {
 
         int numberOfUsers = 2;
         String clientRegistrationId = env.getProperty("kc.client-registration-id.webapp");
@@ -262,6 +409,22 @@ class DbGroupTest {
 
             USERS[j] = new TestUserDto(kcUser.getId(), token);
         }
+
+        //SET SERVICE ACCOUNT IN USERS ARRAY
+        String kcCerts = env.getProperty("api.kc.realm.certs");
+        assertNotNull(kcCerts);
+
+        OAuth2AuthorizeRequest authorizeRequest = OAuth2AuthorizeRequest
+                .withClientRegistrationId(clientRegistrationId)
+                .principal("test-system") // Identity of the requester
+                .build();
+
+        // This triggers the POST to Keycloak if the token is missing or expired
+        OAuth2AuthorizedClient authorizedClient = authorizedClientManager.authorize(authorizeRequest);
+        String serviceAccountToken = authorizedClient.getAccessToken().getTokenValue();
+        Jwt jwt = NimbusJwtDecoder.withJwkSetUri(kcCerts).build().decode(serviceAccountToken);
+
+        USERS[0] = new TestUserDto(jwt.getSubject(), serviceAccountToken);
     }
 
     @AfterAll

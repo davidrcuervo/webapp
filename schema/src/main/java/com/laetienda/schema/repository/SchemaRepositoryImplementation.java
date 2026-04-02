@@ -14,6 +14,7 @@ import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Repository;
 import org.springframework.web.client.HttpClientErrorException;
@@ -51,10 +52,23 @@ public class SchemaRepositoryImplementation implements SchemaRepository{
     @Transactional
     public <T> T update(Class<T> clazz, DbItem item) throws NotValidCustomException {
         log.debug("SCHEMA_REPO::update $clazzName: {}", clazz.getName());
-        T temp = clazz.cast(item);
-        temp = em.merge(temp);
-        em.persist(temp);
-        return temp;
+
+        try {
+            T temp = clazz.cast(item);
+            temp = em.merge(temp);
+            em.persist(temp);
+            return temp;
+        }catch(DataAccessException de){
+            log.warn("SCHEMA_REPOSITORY::update. {}", de.getMessage());
+            log.debug("SCHEMA_REPOSITORY::update. {}", de.getMessage(), de);
+            throw new HttpClientErrorException(HttpStatus.INTERNAL_SERVER_ERROR, de.getMessage());
+        }catch(ClassCastException e){
+            log.warn("SCHEMA_REPOSITORY::update.. {}", e.getMessage());
+            throw new HttpClientErrorException(HttpStatus.BAD_REQUEST, e.getMessage());
+        }catch(Exception e){
+            log.warn("SCHEMA_REPOSITORY::update... {}", e.getMessage());
+            throw new HttpClientErrorException(HttpStatus.BAD_REQUEST, e.getMessage());
+        }
     }
 
     @Override

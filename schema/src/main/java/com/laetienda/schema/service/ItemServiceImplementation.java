@@ -12,9 +12,11 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
 
 import java.util.List;
 import java.util.Map;
@@ -219,16 +221,23 @@ public class ItemServiceImplementation implements ItemService{
                     }
                 }
 
-                schemaRepo.update(clazz, newItem);
+                //Check for item groups
+                groupService.updateItem(newItem, oldItem);
+
+                T update = schemaRepo.update(clazz, newItem);
                 return clazz.cast(newItem);
             }else{
                 String message = String.format("%s can't edit the item with id. $id: %d", request.getUserPrincipal().getName(), newItem.getId());
                 throw new NotValidCustomException(message, HttpStatus.UNAUTHORIZED, "item");
             }
         } catch (JsonProcessingException ex1) {
-            log.error("SCHEMA_REPO::update $error: {}", ex1.getMessage());
+            log.error("ITEM_SERVICE::update $error: {}", ex1.getMessage());
             log.trace(ex1.getMessage(), ex1);
             throw new NotValidCustomException(ex1.getMessage(), HttpStatus.BAD_REQUEST, "item");
+        } catch(DataAccessException d){
+            log.warn("ITEM_SERVICE::update.. {}", d.getMessage());
+            log.debug("ITEM_SERVICE::update. {}", d.getMessage(), d);
+            throw new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR, d.getMessage());
         }
     }
 

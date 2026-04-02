@@ -13,6 +13,7 @@ public interface DbGroupService {
     boolean isValid(DbGroup dbGroup) throws HttpStatusCodeException;
     DbGroup find(String groupId) throws HttpStatusCodeException;
     DbGroup update(String groupId, Map<String, Object> body)  throws HttpStatusCodeException;
+    void updateItem(DbItem newItem, DbItem oldItem) throws HttpStatusCodeException;
     void delete(String groupId) throws HttpStatusCodeException;
     DbGroup addMember(String groupId, String userId) throws HttpStatusCodeException;
     DbGroup removeMember(String groupId, String userId) throws HttpStatusCodeException;

@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 public class DbGroupServiceImplementation implements DbGroupService {
@@ -158,6 +159,45 @@ public class DbGroupServiceImplementation implements DbGroupService {
     }
 
     @Override
+    public void updateItem(DbItem newItem, DbItem oldItem) throws HttpStatusCodeException {
+
+        if (newItem.getEditorGroups() != null){
+
+            if(newItem.getEditorGroups().stream().anyMatch(g -> g.getId() == null))
+                throw new HttpClientErrorException(HttpStatus.BAD_REQUEST, "New DbGroup is present while update item");
+
+            if(oldItem.getEditorGroups() == null){
+                throw new HttpClientErrorException(HttpStatus.BAD_REQUEST, "Groups in new item and old item are different.");
+
+            }else{
+                Set<Long> oldItemEditorGroupIds = oldItem.getEditorGroups().stream().map(DbGroup::getId).collect(Collectors.toSet());
+                Set<Long> newItemEditorGroupIds = newItem.getEditorGroups().stream().map(DbGroup::getId).collect(Collectors.toSet());
+
+                if(!newItemEditorGroupIds.equals(oldItemEditorGroupIds))
+                    throw new HttpClientErrorException(HttpStatus.BAD_REQUEST, "Groups in new item and old item are different.");
+            }
+        }
+
+        if (newItem.getReaderGroups()  != null){
+
+            if(newItem.getReaderGroups().stream().anyMatch(g -> g.getId() == null))
+                throw new HttpClientErrorException(HttpStatus.BAD_REQUEST, "New DbGroup is present while update item");
+
+            if(oldItem.getReaderGroups() == null){
+                throw new HttpClientErrorException(HttpStatus.BAD_REQUEST, "Groups in new item and old item are different.");
+
+            }else{
+                Set<Long> oldItemReaderGroupIds = oldItem.getReaderGroups().stream().map(DbGroup::getId).collect(Collectors.toSet());
+                Set<Long> newItemReaderGroupIds = newItem.getReaderGroups().stream().map(DbGroup::getId).collect(Collectors.toSet());
+
+                if(!newItemReaderGroupIds.equals(oldItemReaderGroupIds))
+                    throw new HttpClientErrorException(HttpStatus.BAD_REQUEST, "Groups in new item and old item are different.");
+            }
+
+        }
+    }
+
+    @Override
     public void delete(String groupId) throws HttpStatusCodeException {
         log.debug("DbGROUP_SERVICE::delete $groupId: {}", groupId);
 
@@ -220,8 +260,8 @@ public class DbGroupServiceImplementation implements DbGroupService {
                 try {
                     apiUser.isUserIdValid(memberId);
                 } catch (HttpStatusCodeException e) {
-                    if (e.getStatusCode() == HttpStatus.NOT_FOUND) {
-                        String result = String.format("User, %s, does not exist", memberId);
+                    if (e.getStatusCode().is4xxClientError()) {
+                        String result = String.format("User, %s, does not exist or is not valid", memberId);
                         log.warn("DbGROUP_SERVICE::areValidUsers. {}", result);
                         throw new HttpClientErrorException(HttpStatus.BAD_REQUEST, result);
                     }else{

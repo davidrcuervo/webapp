@@ -27,5 +27,5 @@ public class SchemaTestConfiguration {
         authorizedClientManager.setAuthorizedClientProvider(authorizedClientProvider);
 
         return authorizedClientManager;
-}
+    }
 }

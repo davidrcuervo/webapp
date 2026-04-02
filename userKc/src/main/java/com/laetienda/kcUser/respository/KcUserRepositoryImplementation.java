@@ -43,7 +43,7 @@ public class KcUserRepositoryImplementation implements KcUserRepository {
 
     @Override
     public KcUser find() {
-        String address = env.getProperty("api.kc.realm.account", ""); //http://keycloaket:${PORT_KEYCLOAK}/realms/etrealm/account
+        String address = env.getProperty("api.kc.realm.account", "/realms/{realm}/account");
         log.trace("KC_USER_REPOSITORY::find. $address: {}", address);
 
         return client.get().uri(address)
