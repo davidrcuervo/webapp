@@ -1,4 +1,4 @@
-FROM ubuntu:24.04 AS etimage
+FROM ubuntu:26.04 AS etimage
 
 #update ubuntu os
 RUN apt update
@@ -38,10 +38,10 @@ RUN useradd -g docker -c "Java user" --shell /bin/bash --create-home --home-dir 
 WORKDIR /opt/myjava
 
 ##INSTALL jdk
-COPY ./docker/Software/jdk-25.0.2_linux-x64_bin.tar.gz /opt/myjava/
-RUN tar -xzvf jdk-25.0.2_linux-x64_bin.tar.gz
-RUN rm jdk-25.0.2_linux-x64_bin.tar.gz
-ENV JAVA_HOME=/opt/myjava/jdk-25.0.2
+COPY ./docker/Software/jdk-25.0.5.0.3_linux-x64_bin.tar.gz /opt/myjava/
+RUN tar -xzvf jdk-25.0.5.0.3_linux-x64_bin.tar.gz
+RUN rm jdk-25.0.5.0.3_linux-x64_bin.tar.gz
+ENV JAVA_HOME=/opt/myjava/jdk-25.0.5.0.3
 
 ##INSTALL jasypt
 RUN sudo install -d -o javauser -g docker -m 0755 /opt/jasypt
@@ -53,10 +53,10 @@ RUN rm /opt/jasypt/jasypt-1.9.3-dist.zip
 #RUN chmod 755 /opt/jasypt/jdecrypt.sh
 
 ##INSTALL maven
-COPY ./docker/Software/apache-maven-3.9.14-bin.tar.gz /opt/myjava/
-RUN tar -xzvf apache-maven-3.9.14-bin.tar.gz
-RUN rm apache-maven-3.9.14-bin.tar.gz
-ENV M2_HOME=/opt/myjava/apache-maven-3.9.14
+COPY ./docker/Software/apache-maven-3.10.0-bin.tar.gz /opt/myjava/
+RUN tar -xzvf apache-maven-3.10.0-bin.tar.gz
+RUN rm apache-maven-3.10.0-bin.tar.gz
+ENV M2_HOME=/opt/myjava/apache-maven-3.10.0
 ENV M2=$M2_HOME/bin
 
 ##SET Java environment variables
@@ -150,7 +150,7 @@ FROM etjava AS keycloaket
 
 RUN useradd -g docker -c "Keycloak application user" --shell /bin/bash --create-home --home-dir /opt/keycloak keycloak
 
-COPY ./docker/Software/keycloak-26.5.5.zip /opt/keycloak
+COPY ./docker/Software/keycloak-26.8.2.zip /opt/keycloak
 
 WORKDIR /opt/keycloak
 COPY ./docker/scripts/keycloak .
@@ -161,11 +161,11 @@ RUN chown keycloak:docker /opt/docker/certs/kc.unsecure.key
 
 USER keycloak
 
-RUN unzip keycloak-26.5.5.zip
-RUN rm keycloak-26.5.5.zip
+RUN unzip keycloak-26.8.2.zip
+RUN rm keycloak-26.8.2.zip
 
 ENV HOME=/opt/keycloak
-ENV PATH="$HOME/keycloak-26.5.5/bin:$PATH"
+ENV PATH="$HOME/keycloak-26.8.2/bin:$PATH"
 
 ############################################
 ## Keycloak Configuration

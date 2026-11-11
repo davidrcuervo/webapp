@@ -1,7 +1,7 @@
 services:
 
   postgreset:
-    image: postgreset:16.4
+    image: postgreset:18.6
     restart: always
     user: postgres
     working_dir: /opt/mypostgres
@@ -33,7 +33,7 @@ services:
       target: postgreset
 
   keycloaket:
-    image: keycloaket:26.5.5
+    image: keycloaket:26.8.2
     user: keycloak
     working_dir: /opt/keycloak
     entrypoint: /opt/keycloak/kc.entrypoint.sh
@@ -62,7 +62,7 @@ services:
 #      - ./docker/scripts/keycloak/kc.entrypoint.sh:/opt/keycloak/kc.entrypoint.sh
 
   keycloaketcnf:
-    image: keycloaketcnf:26.5.5
+    image: keycloaketcnf:26.8.2
     user: keycloak
     working_dir: /opt/keycloak
     entrypoint: /opt/keycloak/kc.config.sh
@@ -88,7 +88,7 @@ services:
 #      - ./docker/scripts/keycloak/kc.check.sh:/opt/keycloak/kc.check.sh
 
   etnginx:
-    image: etnginx:1.24
+    image: etnginx:1.28
 #    user: nginx
     working_dir: /opt/nginx
     entrypoint: ./nginx.entrypoint.sh

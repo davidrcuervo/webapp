@@ -1,6 +1,7 @@
 /.idea
 .idea/modules.xml
 /.docker
+/.claude_config
 /frontend/target
 /library/target
 /library/null

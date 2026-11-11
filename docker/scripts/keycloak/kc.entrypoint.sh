@@ -44,7 +44,7 @@ echo "keycloak database type: $SCHEMA_TYPE"
 echo "keycloak database url: $SCHEMA_KEYCLOAK_URL"
 echo "keycloak database username: $SCHEMA_KEYCLOAK_USERNAME"
 
-$HOME/keycloak-26.5.5/bin/kc.sh start \
+$HOME/keycloak-26.8.2/bin/kc.sh start \
 --db=$SCHEMA_TYPE \
 --db-url=$SCHEMA_KEYCLOAK_URL \
 --db-username=$SCHEMA_KEYCLOAK_USERNAME \

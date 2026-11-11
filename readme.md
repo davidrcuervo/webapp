@@ -36,11 +36,11 @@ git clone git@github.com:davidrcuervo/webapp.git
 
 Download software to folder ```$APP_ROOT_FOLDER/docker/Software```
 
-+ [ ] ```jdk-25.0.2_linux-x64_bin.tar.gz``` | Link: [Java SE Development Kit 25.0.2 downloads](https://www.oracle.com/ca-en/java/technologies/downloads/#jdk25-linux)
-+ [ ] ```apache-maven-3.9.14-bin.tar.gz``` | Link: [Downloading Apache Maven 3.9.14](https://maven.apache.org/download.cgi)
++ [ ] ```jdk-25.0.5.0.3_linux-x64_bin.tar.gz``` | Link: [Java SE Development Kit 25.0.2 downloads](https://www.oracle.com/ca-en/java/technologies/downloads/#jdk25-linux)
++ [ ] ```apache-maven-3.10.0-bin.tar.gz``` | Link: [Downloading Apache Maven 3.9.14](https://maven.apache.org/download.cgi)
 + [ ] ```jasypt-1.9.3-dist.zip``` | Link: [jasypt 1.9.3 (binaries and javadocs)](https://github.com/jasypt/jasypt/releases/download/jasypt-1.9.3/jasypt-1.9.3-dist.zip)
-+ [ ] ```keycloak-26.5.5.zip``` | Link: [Keycloak Downloads 26.5.5](https://www.keycloak.org/archive/downloads-26.5.5.html)
-+ [ ] ```junit-platform-console-standalone-6.0.3.jar``` | Link: [Maven Repository | org/junit/platform/junit-platform-console-standalone/6.0.3](https://repo1.maven.org/maven2/org/junit/platform/junit-platform-console-standalone/6.0.3/)
++ [ ] ```keycloak-26.8.2.zip``` | Link: [Keycloak Downloads 26.5.5](https://www.keycloak.org/downloads)
++ [ ] ```junit-platform-console-standalone-6.1.3.jar``` | Link: [Maven Repository | org/junit/platform/junit-platform-console-standalone/6.1.3](https://repo1.maven.org/maven2/org/junit/platform/junit-platform-console-standalone/6.1.3/)
 
 ## Create key
 
