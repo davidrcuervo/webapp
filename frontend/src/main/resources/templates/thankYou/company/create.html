@@ -16,7 +16,7 @@
         </p>
 
         <div class="d-grid gap-2 col-6 mx-auto">
-            <a th:href="@{${@comp.href(company.vanityUrl)}}" class="btn btn-primary" role="button">
+            <a th:href="${@comp.href(company.vanityUrl)}" class="btn btn-primary" role="button">
                 <span th:text="${company.name}">
                     Company Name
                 </span>

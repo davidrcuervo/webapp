@@ -1,7 +1,7 @@
 services:
 
   postgreset:
-    image: postgreset:18.6
+    image: etienda/postgres:18.6
     restart: always
     user: postgres
     working_dir: /opt/mypostgres
@@ -33,7 +33,7 @@ services:
       target: postgreset
 
   keycloaket:
-    image: keycloaket:26.8.2
+    image: etienda/keycloak:26.8.2
     user: keycloak
     working_dir: /opt/keycloak
     entrypoint: /opt/keycloak/kc.entrypoint.sh
@@ -62,7 +62,7 @@ services:
 #      - ./docker/scripts/keycloak/kc.entrypoint.sh:/opt/keycloak/kc.entrypoint.sh
 
   keycloaketcnf:
-    image: keycloaketcnf:26.8.2
+    image: etienda/keycloakcnf:26.8.2
     user: keycloak
     working_dir: /opt/keycloak
     entrypoint: /opt/keycloak/kc.config.sh
@@ -88,7 +88,7 @@ services:
 #      - ./docker/scripts/keycloak/kc.check.sh:/opt/keycloak/kc.check.sh
 
   etnginx:
-    image: etnginx:1.28
+    image: etienda/nginx:1.28
 #    user: nginx
     working_dir: /opt/nginx
     entrypoint: ./nginx.entrypoint.sh
@@ -113,7 +113,7 @@ services:
       - ./docker/scripts/nginx:/opt/nginx
 
   etjava:
-    image: etjava:1.0
+    image: etienda/java:1.0
     secrets:
       - jasypt-password
     networks:
@@ -128,7 +128,7 @@ services:
 #      - ./docker/scripts/jasypt/jdecrypt.sh:/opt/jasypt/jdecrypt.sh
 
   etuser:
-    image: etuser:1.0
+    image: etienda/user:1.0
     user: webappuser
     working_dir: /opt/webapp
     entrypoint: ["./bin/safestart.sh"]
@@ -161,7 +161,7 @@ services:
 #      - ./docker/scripts/webapp:/opt/webapp/bin
 
   etschema:
-    image: etschema:1.0
+    image: etienda/schema:1.0
     user: webappuser
     working_dir: /opt/webapp
     entrypoint: [ "./bin/safestart.sh" ]
@@ -194,7 +194,7 @@ services:
 #      - ./docker/scripts/webapp:/opt/webapp/bin
 
   etmail:
-    image: etmail:1.0
+    image: etienda/mail:1.0
     user: webappuser
     working_dir: /opt/webapp
     entrypoint: [ "./bin/safestart.sh" ]
@@ -226,7 +226,7 @@ services:
       - ./application.yml:/opt/webapp/etc/application.yml
 
   etcompany:
-    image: etcompany:1.0
+    image: etienda/company:1.0
     user: webappuser
     working_dir: /opt/webapp
     entrypoint: [ "./bin/safestart.sh" ]
@@ -262,7 +262,7 @@ services:
       - ./application.yml:/opt/webapp/etc/application.yml
 
   frontend:
-    image: frontend:1.0
+    image: etienda/frontend:1.0
     user: webappuser
     working_dir: /opt/webapp
     entrypoint: ["./bin/safestart.sh"]
@@ -297,8 +297,8 @@ services:
 #    volumes:
 #      - ./frontend:/opt/webapp/src/frontend
 
-  testcontainer:
-    image: testcontainer:1.0
+  ettest:
+    image: etienda/test:1.0
     user: webappuser
     working_dir: /opt/webapp
     entrypoint: /bin/bash

@@ -14,7 +14,7 @@
         <form sec:authorize="isAuthenticated()"
               th:with="user = ${@usr.currentUser}"
               th:object="${company}"
-              th:action="@{${@tt.href('seo.manage.company.create')}}"
+              th:action="${@tt.href('seo.manage.company.create')}"
               method="post"
         >
             <!-- Company name -->

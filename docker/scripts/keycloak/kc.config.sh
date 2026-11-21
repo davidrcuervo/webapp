@@ -92,6 +92,8 @@ CLIENT_ID=$(kcadm.sh get clients -r etrealm -q clientId="$KC_USER_CLIENT_ID" -F 
 SERVICE_USER_USERNAME=$(kcadm.sh get clients/"$CLIENT_ID"/service-account-user -r etrealm -F username --format csv --noquotes)
 kcadm.sh add-roles -r etrealm --uusername "$SERVICE_USER_USERNAME" --cclientid realm-management --rolename view-users --rolename manage-users --rolename view-realm
 kcadm.sh add-roles -r etrealm --uusername "$SERVICE_USER_USERNAME" --rolename role_service
+KC_ADMIN_API_SCOPE_ID=$(kcadm.sh get client-scopes -r etrealm -F id,name --format csv --noquotes | awk -F "," '$2=="kc-admin-api"{print $1}')
+kcadm.sh update clients/"$CLIENT_ID"/default-client-scopes/"$KC_ADMIN_API_SCOPE_ID" -r etrealm
 
 #create client for webapp microservices
 echo "Create webapp client"

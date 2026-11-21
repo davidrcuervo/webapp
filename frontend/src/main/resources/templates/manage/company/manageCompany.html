@@ -35,7 +35,7 @@
             </div>
 
             <!-- Update Company name -->
-            <form th:action="@{${@tt.href('seo.manage.company.update.pattern', company.vanityUrl, 'name')}}"
+            <form th:action="${@tt.href('seo.manage.company.update.pattern', company.vanityUrl, 'name')}"
                   method="post"
                   id="companyNameForm"
             >
@@ -58,7 +58,7 @@
             </form>
 
             <!-- Update company vanityUrl -->
-            <form th:action="@{${@tt.href('seo.manage.company.update.pattern', company.vanityUrl, 'vanityUrl')}}"
+            <form th:action="${@tt.href('seo.manage.company.update.pattern', company.vanityUrl, 'vanityUrl')}"
                   method="post"
                   id="companyVanityUrlForm"
             >
@@ -81,7 +81,7 @@
             </form>
 
             <!-- Update owner -->
-            <form th:action="@{${@tt.href('seo.manage.company.update.pattern', company.vanityUrl, 'owner')}}"
+            <form th:action="${@tt.href('seo.manage.company.update.pattern', company.vanityUrl, 'owner')}"
                   method="post"
                   id="companyOwnerForm"
             >
@@ -104,7 +104,7 @@
             </form>
 
             <!-- Update Member policy -->
-            <form th:action="@{${@tt.href('seo.manage.company.update.pattern', company.vanityUrl, 'memberPolicy')}}"
+            <form th:action="${@tt.href('seo.manage.company.update.pattern', company.vanityUrl, 'memberPolicy')}"
                   method="post"
                   id="companyPolicyForm"
             >
@@ -126,7 +126,7 @@
             </form>
 
             <!-- Update description -->
-            <form th:action="@{${@tt.href('seo.manage.company.update.pattern', company.vanityUrl, 'description')}}"
+            <form th:action="${@tt.href('seo.manage.company.update.pattern', company.vanityUrl, 'description')}"
                   method="post"
                   id="updateCompanyDescriptionForm"
             >
@@ -162,7 +162,7 @@
                 >
                     <td th:text="${user.fullName}">Member Name</td>
                     <td class="text-center">
-                        <form th:action="@{${@tt.href('seo.manage.company.update.member', company.vanityUrl, 'manager', user.id)}}"
+                        <form th:action="${@tt.href('seo.manage.company.update.member', company.vanityUrl, 'manager', user.id)}"
                               method="post"
                               class="checkBoxWithModal"
                         >
@@ -187,7 +187,7 @@
                         </form>
                     </td>
                     <td class="text-center">
-                        <form th:action="@{${@tt.href('seo.manage.company.update.member', company.vanityUrl, 'member', user.id)}}"
+                        <form th:action="${@tt.href('seo.manage.company.update.member', company.vanityUrl, 'member', user.id)}"
                               method="post"
                               class="checkBoxWithModal"
                         >

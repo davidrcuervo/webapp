@@ -25,13 +25,14 @@ CSRF is only disabled for the actuator endpoint; it remains active everywhere el
 
 ```html
 <!-- Resolve a property key to its URL path -->
-th:href="@{${@tt.href('seo.home.file')}}"
+th:href="${@tt.href('seo.home.file')}"
 
 <!-- Mark nav item active if current path matches -->
 th:classappend="${@tt.isActive(link) ? 'active' : ''}"
 
 <!-- Get current full URI (used for redirect-back links) -->
-th:href="@{${@tt.href('seo.signIn')}(redirect=${@tt.uri})}"
+th:with="signInHref=${@tt.href('seo.signIn')}, currentPath=${@tt.path}"
+th:href="@{${signInHref}(redirect=${currentPath})}">
 ```
 
 `tt.href(key)` reads from Spring `Environment` — it resolves `seo.*` property keys defined in `API/application.yml`. Never hardcode URL paths in templates; always go through `@tt.href(...)`.

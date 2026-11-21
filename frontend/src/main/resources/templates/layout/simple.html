@@ -30,7 +30,9 @@
             <th:block sec:authorize="!isAuthenticated()">
                 <ul class="navbar-nav order-md-last mx-2">
                     <li class="nav-item">
-                        <a class="nav-link" th:href="@{${@tt.href('seo.signIn')}(redirect=${@tt.path})}">
+                        <a class="nav-link"
+                           th:with="signInHref=${@tt.href('seo.signIn')}, currentPath=${@tt.path}"
+                           th:href="@{${signInHref}(redirect=${currentPath})}">
                             <i class="bi bi-box-arrow-in-right"></i>
                             Sing In
                         </a>
@@ -47,7 +49,7 @@
                     <ul class="dropdown-menu dropdown-menu-end">
                         <li>
                             <a class="dropdown-item"
-                               th:href="@{${@tt.href('seo.manage.file')}}"
+                               th:href="${@tt.href('seo.manage.file')}"
                             >
                             <i class="bi bi-gear"></i>
                             Settings
@@ -76,7 +78,7 @@
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb">
                 <li class="breadcrumb-item">
-                    <a href="#home" th:href="@{${@tt.href('seo.home.file')}}">
+                    <a href="#home" th:with="link=${@tt.href('seo.home.file')}" th:href="${link}">
                         <i class="bi bi-house-door-fill"></i>
                     </a>
                 </li>
@@ -84,9 +86,9 @@
                 <th:block th:with="segments = ${@tt.segments}">
                     <li class="breadcrumb-item"
                         th:each="i : ${#numbers.sequence(0, segments.size()-1)}"
-                        th:with="segment=${segments.get(i)}, path = ${@tt.getSegmentPath(segments, i)}"
+                        th:with="segment=${segments.get(i)}, path=${@tt.getSegmentPath(segments, i)}, isActive=${@tt.isActive(path)}"
                         th:classappend="${@tt.isActive(path) ? 'active' : null}"
-                        th:aria-current="${@tt.isActive(path) ? 'page' : null}"
+                        th:aria-current="${isActive ? 'page' : null}"
                     >
                         <a th:href="@{${path}}"
                            th:unless="${@tt.isActive(path)}"

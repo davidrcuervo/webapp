@@ -9,7 +9,6 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
-import org.checkerframework.common.aliasing.qual.Unique;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,12 +17,12 @@ import java.util.List;
 @Table(name = "COMPANY")
 public class Company extends DbItem {
 
-    @NotNull @Unique
+    @NotNull
     @Size(min = 3, max = 64)
     @Column(unique = true, nullable = false, length = 64)
     private String name;
 
-    @NotNull @Unique
+    @NotNull
     @Size(min = 3, max = 64)
     @Pattern(
             regexp = "^[a-zA-Z0-9_-]+$",

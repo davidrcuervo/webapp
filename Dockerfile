@@ -5,7 +5,7 @@ RUN apt update
 RUN apt upgrade -y
 
 #install required packages
-RUN apt install -y openssl sudo openssh-client curl dos2unix gettext-base netcat-openbsd unzip
+RUN apt install -y openssl sudo openssh-client curl dos2unix gettext-base netcat-openbsd unzip tzdata
 
 #Create docker directory and copy environment variables.
 WORKDIR /opt/docker
