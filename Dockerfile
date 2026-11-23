@@ -5,7 +5,7 @@ RUN apt update
 RUN apt upgrade -y
 
 #install required packages
-RUN apt install -y openssl sudo openssh-client curl dos2unix gettext-base netcat-openbsd unzip tzdata postgresql-client
+RUN apt install -y openssl sudo openssh-client curl dos2unix gettext-base netcat-openbsd unzip tzdata postgresql-client vim
 
 #Create docker directory and copy environment variables.
 WORKDIR /opt/docker
@@ -159,6 +159,7 @@ COPY ./docker/Software/keycloak-26.8.2.zip /opt/keycloak
 WORKDIR /opt/keycloak
 COPY ./docker/scripts/keycloak .
 RUN find ./ -maxdepth 1 -type f -name "*.sh" | xargs dos2unix
+RUN find ./ -maxdepth 1 -type f -name "*.sh" | xargs chmod +x
 
 #copy certificates and keys
 RUN chown keycloak:docker /opt/docker/certs/kc.unsecure.key

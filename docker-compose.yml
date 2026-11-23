@@ -56,7 +56,7 @@ services:
     env_file:
       - .env
     healthcheck:
-      test: ["CMD","curl","--fail","--insecure","https://keycloaket:9001/health/ready"]
+      test: [ "CMD","sh","-c","./kc.check.sh" ]
       interval: 20s
       timeout: 10s
       retries: 5
@@ -66,34 +66,6 @@ services:
       args:
         - ARCHITECTURE=${ARCHITECTURE}
         - JAVA_VERSION=${JAVA_VERSION}
-#    volumes:
-#      - ./docker/scripts/keycloak/kc.entrypoint.sh:/opt/keycloak/kc.entrypoint.sh
-
-  keycloakcnf:
-    image: etienda/keycloakcnf:26.8.2
-    user: keycloak
-    working_dir: /opt/keycloak
-    entrypoint: /opt/keycloak/kc.config.sh
-    env_file:
-      - .env
-    secrets:
-      - jasypt-password
-    depends_on:
-      nginx:
-        condition: service_healthy
-    networks:
-      - backend
-    healthcheck:
-      test: [ "CMD","sh","-c","./kc.check.sh" ]
-      interval: 20s
-      timeout: 25s
-      retries: 5
-      start_period: 40s
-    build:
-      target: keycloaketcnf
-    volumes:
-      - ./docker/scripts/keycloak/kc.config.sh:/opt/keycloak/kc.config.sh
-#      - ./docker/scripts/keycloak/kc.check.sh:/opt/keycloak/kc.check.sh
 
   nginx:
     image: etienda/nginx:1.28
@@ -152,7 +124,7 @@ services:
     secrets:
       - jasypt-password
     depends_on:
-      keycloakcnf:
+      keycloak:
           condition: service_healthy
     networks:
       - backend
@@ -163,7 +135,7 @@ services:
     environment:
       - HOME=/opt/webapp
     healthcheck:
-      test: [ "CMD","curl","--fail","http://etuser:8081/actuator/health" ]
+      test: [ "CMD","curl","--fail","http://user:8081/actuator/health" ]
       interval: 20s
       timeout: 10s
       retries: 5

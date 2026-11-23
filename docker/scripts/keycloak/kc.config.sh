@@ -4,7 +4,7 @@ function install(){
 #set admin credentials
 KC_ADMIN_PASSWORD=$(/opt/jasypt/jdecrypt.sh "$KC_BOOTSTRAP_ADMIN_ENC_PASSWORD")
 kcadm.sh config credentials \
---server https://$KC_PUBLIC_ADDRESS:$KC_PUBLIC_PORT \
+--server $KC_CONFIG_SERVER \
 --realm master \
 --user $KC_BOOTSTRAP_ADMIN_USERNAME \
 --password $KC_ADMIN_PASSWORD
@@ -241,11 +241,6 @@ if [ -z "$PORT_KEYCLOAK" ]; then
   exit 1
 fi
 
-if [ -z "$PORT_KEYCLOAK_CONF" ]; then
-  echo "Variable, PORT_KEYCLOAK_CONF, is unset" >&2
-  exit 1
-fi
-
 if [ -z "$KC_PUBLIC_ADDRESS" ]; then
   echo "Variable, KC_PUBLIC_ADDRESS, is unset" >&2
   exit 1
@@ -266,6 +261,12 @@ if [ -z "$WEBAPP_PUBLIC_ADDRESS" ]; then
   exit 1
 fi
 
+if [ -z "$KC_CONFIG_SERVER" ]; then
+  echo "Variable, KC_CONFIG_SERVER, is unset" >&2
+  exit 1
+fi
+export KC_CONFIG_SERVER:
+
 #TEST IF CONFIGURATION SCRIPT NEEDS TO BE EXECUTED
 if sh -c /opt/keycloak/kc.check.sh; then
   echo "keycloak is already configured"
@@ -273,7 +274,3 @@ else
   echo "Configuring keycloak..."
   install
 fi
-
-##OPEN PORT TO LISTEN CONNECTION AND CHECK WHEN CONFIGURATION HAS FINISHED
-echo "open port and send healthy status"
-nc -l -p "$PORT_KEYCLOAK_CONF"

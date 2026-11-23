@@ -44,6 +44,7 @@ echo "keycloak database type: $SCHEMA_TYPE"
 echo "keycloak database url: $SCHEMA_KEYCLOAK_URL"
 echo "keycloak database username: $SCHEMA_KEYCLOAK_USERNAME"
 
+#START KEYCLOAK
 $HOME/keycloak-26.8.2/bin/kc.sh start \
 --db=$SCHEMA_TYPE \
 --db-url=$SCHEMA_KEYCLOAK_URL \
@@ -54,9 +55,25 @@ $HOME/keycloak-26.8.2/bin/kc.sh start \
 --http-management-port $PORT_KEYCLOAK_MANAGEMENT \
 --hostname-strict false \
 --https-certificate-file=/opt/docker/certs/kc.crt \
---https-certificate-key-file=/opt/docker/certs/kc.unsecure.key
+--https-certificate-key-file=/opt/docker/certs/kc.unsecure.key \
+& PID_KC=$!
 #--http-enabled true \
 #--proxy-headers=forwarded \
 #--http-port=$PORT_KEYCLOAK
 #--hostname=auth.webapp.com \
 #--hostname-backchannel-dynamic true \
+
+#Wait keycloak to start
+echo "Waiting keycloak to become ready..."
+until curl --fail --insecure --silent "https://localhost:$PORT_KEYCLOAK_MANAGEMENT/health/ready" > /dev/null; do
+  if ! kill -0 "$PID_KC" 2>/dev/null; then
+    echo "keycloak exited before becoming ready" >&2
+    wait "$PID_KC"; exit 1
+  fi
+  sleep 5
+done
+echo "Keycloak up and ready!"
+
+#Run configuration script.
+echo "Running realm configuration..."
+KC_CONFIG_SERVER="https://localhost:$PORT_KEYCLOAK" /opt/keycloak/kc.config.sh & wait "$PID_KC"
