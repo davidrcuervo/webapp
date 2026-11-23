@@ -5,7 +5,7 @@ RUN apt update
 RUN apt upgrade -y
 
 #install required packages
-RUN apt install -y openssl sudo openssh-client curl dos2unix gettext-base netcat-openbsd unzip tzdata
+RUN apt install -y openssl sudo openssh-client curl dos2unix gettext-base netcat-openbsd unzip tzdata postgresql-client
 
 #Create docker directory and copy environment variables.
 WORKDIR /opt/docker
@@ -38,10 +38,18 @@ RUN useradd -g docker -c "Java user" --shell /bin/bash --create-home --home-dir 
 WORKDIR /opt/myjava
 
 ##INSTALL jdk
-COPY ./docker/Software/jdk-25.0.5.0.3_linux-x64_bin.tar.gz /opt/myjava/
-RUN tar -xzvf jdk-25.0.5.0.3_linux-x64_bin.tar.gz
-RUN rm jdk-25.0.5.0.3_linux-x64_bin.tar.gz
-ENV JAVA_HOME=/opt/myjava/jdk-25.0.5.0.3
+ARG ARCHITECTURE=amd64
+ARG JAVA_VERSION=25.0.5.1
+
+RUN --mount=type=bind,source=docker/Software,target=/tmp/sw \
+  set -eux; \
+  case "$ARCHITECTURE" in \
+    amd64) JDK_TAR=jdk-"$JAVA_VERSION"_linux-x64_bin.tar.gz ;; \
+    arm64) JDK_TAR=jdk-"$JAVA_VERSION"_linux-aarch64_bin.tar.gz ;; \
+    *) echo "Unsupported architecture: $ARCHITECTURE" >&2; exit 1 ;; \
+  esac; \
+  tar -xzf "/tmp/sw/$JDK_TAR" -C /opt/myjava
+ENV JAVA_HOME="/opt/myjava/jdk-$JAVA_VERSION"
 
 ##INSTALL jasypt
 RUN sudo install -d -o javauser -g docker -m 0755 /opt/jasypt
@@ -50,13 +58,13 @@ COPY ./docker/scripts/jasypt/jdecrypt.sh /opt/jasypt/
 RUN unzip /opt/jasypt/jasypt-1.9.3-dist.zip -d /opt/jasypt
 RUN chmod +x -R /opt/jasypt/jasypt-1.9.3/bin
 RUN rm /opt/jasypt/jasypt-1.9.3-dist.zip
-#RUN chmod 755 /opt/jasypt/jdecrypt.sh
+RUN chmod 755 /opt/jasypt/jdecrypt.sh
 
 ##INSTALL maven
-COPY ./docker/Software/apache-maven-3.10.0-bin.tar.gz /opt/myjava/
-RUN tar -xzvf apache-maven-3.10.0-bin.tar.gz
-RUN rm apache-maven-3.10.0-bin.tar.gz
-ENV M2_HOME=/opt/myjava/apache-maven-3.10.0
+COPY ./docker/Software/apache-maven-3.10.1-bin.tar.gz /opt/myjava/
+RUN tar -xzvf apache-maven-3.10.1-bin.tar.gz
+RUN rm apache-maven-3.10.1-bin.tar.gz
+ENV M2_HOME=/opt/myjava/apache-maven-3.10.1
 ENV M2=$M2_HOME/bin
 
 ##SET Java environment variables
@@ -72,26 +80,24 @@ WORKDIR /opt/docker
 
 #copy private files
 COPY ./docker/private/jasypt-password.txt ./
-COPY ./docker/private/admuser-password.txt ./
-COPY ./docker/private/samsepi0l-password.txt ./
 
 #Create administrator user
-RUN ADMUSER_PASS=$(/opt/jasypt/jdecrypt.sh "$(cat admuser-password.txt)" "$(cat jasypt-password.txt)") && \
+RUN export APP_USER_ADMIN_ENC_PASSWORD=$(cat /opt/docker/webapp.env | grep APP_USER_ADMIN_ENC_PASSWORD | awk -F "=" '{print $2}') && \
+    ADMUSER_PASS=$(/opt/jasypt/jdecrypt.sh "$APP_USER_ADMIN_ENC_PASSWORD" "$(cat jasypt-password.txt)") && \
     ADMUSER_CYPHERED_PASSWORD=$(openssl passwd -1 "$ADMUSER_PASS") && \
     useradd -c "Administrator user" --password "$ADMUSER_CYPHERED_PASSWORD" --shell /bin/bash --create-home --home-dir /home/admuser admuser
 RUN usermod -a -G sudo admuser
 
 #Create a simple user
-RUN SAMSEPI0L_PASS=$(/opt/jasypt/jdecrypt.sh "$(cat samsepi0l-password.txt)" "$(cat jasypt-password.txt)") && \
+RUN export APP_USER_TEST_ENC_PASSWORD=$(cat /opt/docker/webapp.env | grep APP_USER_TEST_ENC_PASSWORD | awk -F "=" '{print $2}') && \
+    SAMSEPI0L_PASS=$(/opt/jasypt/jdecrypt.sh "$APP_USER_TEST_ENC_PASSWORD" "$(cat jasypt-password.txt)") && \
     SAMSEPI0L_CYPHERED_PASSWORD=$(openssl passwd -1 "$SAMSEPI0L_PASS") && \
     useradd -c "Simple user." --password "$SAMSEPI0L_CYPHERED_PASSWORD" --shell /bin/bash --create-home --home-dir /home/samsepi0l samsepi0l
 
 #remove sesitive files from image
-RUN rm admuser-password.txt
-RUN rm samsepi0l-password.txt
+#RUN rm admuser-password.txt
+#RUN rm samsepi0l-password.txt
 RUN rm jasypt-password.txt
-
-
 
 ################################
 ## MY POSTGRESQL IMAGE
@@ -123,8 +129,6 @@ RUN apt install -y postgresql
 COPY ./docker/scripts/database/. scripts/.
 RUN chown postgres:postgres -R scripts/
 RUN chmod 755 -R scripts/
-
-
 
 
 ################################
@@ -207,15 +211,6 @@ RUN --mount=type=bind,source=library,target=src/library bin/compile.sh library
 RUN --mount=type=bind,source=model,target=src/model bin/compile.sh model
 RUN --mount=type=bind,source=utils,target=src/utils bin/compile.sh utils
 
-#Clean project through maven
-#RUN mvn clean -f spring/pom.xml
-#RUN mvn install -f spring/library/pom.xml
-#RUN mvn install -f spring/model/pom.xml
-#RUN mvn install -f spring/utils/pom.xml
-#RUN mvn install -DskipTests -f spring/userKc/pom.xml
-#RUN mvn install -DskipTests -f spring/frontend/pom.xml
-#RUN mvn package -DskipTests -f spring/webapp-test/pom.xml
-
 ############################################
 ## USER SERVICE
 ############################################
@@ -251,47 +246,24 @@ FROM etwebapp AS frontend
 
 RUN --mount=type=bind,source=frontend,target=src/frontend bin/compile.sh frontend
 
-################################
-## MY OpenLDAP IMAGE (2.6.7)
-###############################
-FROM etubuntu AS myslapd
+############################################
+## CLAUDE
+############################################
 
-#variables and arguments
-ENV DEBIAN_FRONTEND=noninteractive
-ARG OPENLDAP_UID=1001
-ARG OPENLDAP_GID=1001
+FROM etjava as claude
 
-USER root
-WORKDIR /opt/myslapd
+RUN PASSWORD=$(openssl passwd -1 secret) && \
+    useradd -c "User to run claude assistant" \
+    -g docker \
+    --password "$PASSWORD" \
+    --shell /bin/bash \
+    --create-home --home-dir /home/claude \
+    claudia
 
-#Create openldap user
-RUN groupadd -g $OPENLDAP_GID openldap
-RUN useradd -u $OPENLDAP_UID -g openldap -c "OpenLDAP Server Account" --shell /bin/false --home-dir /opt/myslapd openldap
-
-#install openldap
-RUN echo 'slapd/root_password password password' | debconf-set-selections && \
-    echo 'slapd/root_password_again password password' | debconf-set-selections && \
-    apt install -y slapd ldap-utils
-#    /etc/init.d/slapd start
-
-#Copy ldif schemas to docker guest container
-RUN mkdir etienda
-RUN mkdir etienda/scripts
-RUN mkdir etienda/data
-COPY docker/scripts/ldap etienda/scripts/
-#COPY ./scripts/ldap/etienda.github.ssh.config.ldif etienda/scripts/
-#COPY ./scripts/ldap/etienda.ldif etienda/scripts/
-RUN chown openldap:openldap -R etienda
-RUN chmod 700 -R etienda
-
-#install ldap directory
-RUN /etc/init.d/slapd start && \
-    ldapmodify -Y EXTERNAL -H ldapi:/// -f /opt/myslapd/etienda/scripts/etienda.config.ldif
-#    ldapmodify -Y EXTERNAL -H ldapi:/// -f /opt/myslapd/etienda/scripts/etienda.ldif
-
-#RUN
-USER openldap
-ENTRYPOINT ["/opt/myslapd/etienda/scripts/slapd-entrypoint.sh"]
-#ENTRYPOINT ["/usr/sbin/slapd", "-u", "openldap", "-g", "openldap", "-F", "/etc/ldap/slapd.d", "-h", "ldaps:/// ldapi:/// ldap:///", "-d", "stats"]
-#USER samsepi0l
-#ENTRYPOINT ["/bin/bash"]
+USER claudia
+WORKDIR /home/claude
+RUN curl -fsSL -O https://claude.ai/install.sh
+RUN chmod +x install.sh
+RUN ./install.sh
+RUN rm install.sh
+ENV HOME=/home/claude

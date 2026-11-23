@@ -1,7 +1,9 @@
+name: ${WEBAPP_NAME}
+
 services:
 
-  postgreset:
-    image: etienda/postgres:18.6
+  postgres:
+    image: ${WEBAPP_NAME}/postgres:18.6
     restart: always
     user: postgres
     working_dir: /opt/mypostgres
@@ -31,8 +33,11 @@ services:
       start_period: 60s
     build:
       target: postgreset
+      args:
+        - ARCHITECTURE=${ARCHITECTURE}
+        - JAVA_VERSION=${JAVA_VERSION}
 
-  keycloaket:
+  keycloak:
     image: etienda/keycloak:26.8.2
     user: keycloak
     working_dir: /opt/keycloak
@@ -40,7 +45,7 @@ services:
     secrets:
       - jasypt-password
     depends_on:
-      postgreset:
+      postgres:
         condition: service_healthy
     networks:
       - backend
@@ -58,10 +63,13 @@ services:
       start_period: 40s
     build:
       target: keycloaket
+      args:
+        - ARCHITECTURE=${ARCHITECTURE}
+        - JAVA_VERSION=${JAVA_VERSION}
 #    volumes:
 #      - ./docker/scripts/keycloak/kc.entrypoint.sh:/opt/keycloak/kc.entrypoint.sh
 
-  keycloaketcnf:
+  keycloakcnf:
     image: etienda/keycloakcnf:26.8.2
     user: keycloak
     working_dir: /opt/keycloak
@@ -71,7 +79,7 @@ services:
     secrets:
       - jasypt-password
     depends_on:
-      etnginx:
+      nginx:
         condition: service_healthy
     networks:
       - backend
@@ -87,7 +95,7 @@ services:
       - ./docker/scripts/keycloak/kc.config.sh:/opt/keycloak/kc.config.sh
 #      - ./docker/scripts/keycloak/kc.check.sh:/opt/keycloak/kc.check.sh
 
-  etnginx:
+  nginx:
     image: etienda/nginx:1.28
 #    user: nginx
     working_dir: /opt/nginx
@@ -95,7 +103,7 @@ services:
     env_file:
       - .env
     depends_on:
-      keycloaket:
+      keycloak:
         condition: service_healthy
     networks:
       backend:
@@ -109,10 +117,13 @@ services:
       test: ["CMD","curl","--fail","--insecure","https://${KC_PUBLIC_ADDRESS}:${WEBAPP_PUBLIC_PORT}/nginx/health"]
     build:
       target: etnginx
+      args:
+        - ARCHITECTURE=${ARCHITECTURE}
+        - JAVA_VERSION=${JAVA_VERSION}
     volumes:
       - ./docker/scripts/nginx:/opt/nginx
 
-  etjava:
+  java:
     image: etienda/java:1.0
     secrets:
       - jasypt-password
@@ -124,10 +135,13 @@ services:
       - HOME=/opt/webapp
     build:
       target: etjava
+      args:
+        - ARCHITECTURE=${ARCHITECTURE}
+        - JAVA_VERSION=${JAVA_VERSION}
 #    volumes:
 #      - ./docker/scripts/jasypt/jdecrypt.sh:/opt/jasypt/jdecrypt.sh
 
-  etuser:
+  user:
     image: etienda/user:1.0
     user: webappuser
     working_dir: /opt/webapp
@@ -138,7 +152,7 @@ services:
     secrets:
       - jasypt-password
     depends_on:
-      keycloaketcnf:
+      keycloakcnf:
           condition: service_healthy
     networks:
       - backend
@@ -160,7 +174,7 @@ services:
       - ./application.yml:/opt/webapp/etc/application.yml
 #      - ./docker/scripts/webapp:/opt/webapp/bin
 
-  etschema:
+  schema:
     image: etienda/schema:1.0
     user: webappuser
     working_dir: /opt/webapp
@@ -171,7 +185,7 @@ services:
     secrets:
       - jasypt-password
     depends_on:
-      etuser:
+      user:
         condition: service_healthy
     networks:
       - backend
@@ -193,7 +207,7 @@ services:
       - ./application.yml:/opt/webapp/etc/application.yml
 #      - ./docker/scripts/webapp:/opt/webapp/bin
 
-  etmail:
+  messenger:
     image: etienda/mail:1.0
     user: webappuser
     working_dir: /opt/webapp
@@ -204,7 +218,7 @@ services:
     secrets:
       - jasypt-password
     depends_on:
-      etuser:
+      user:
         condition: service_healthy
     networks:
       - backend
@@ -225,7 +239,7 @@ services:
     volumes:
       - ./application.yml:/opt/webapp/etc/application.yml
 
-  etcompany:
+  company:
     image: etienda/company:1.0
     user: webappuser
     working_dir: /opt/webapp
@@ -236,11 +250,11 @@ services:
     secrets:
       - jasypt-password
     depends_on:
-      etuser:
+      user:
         condition: service_healthy
-      etschema:
+      schema:
         condition: service_healthy
-      etmail:
+      messenger:
         condition: service_healthy
     networks:
       - backend
@@ -272,11 +286,11 @@ services:
     secrets:
       - jasypt-password
     depends_on:
-      etuser:
+      user:
         condition: service_healthy
-      etschema:
+      schema:
         condition: service_healthy
-      etmail:
+      messenger:
         condition: service_healthy
     networks:
       - backend
@@ -297,16 +311,16 @@ services:
 #    volumes:
 #      - ./frontend:/opt/webapp/src/frontend
 
-  ettest:
-    image: etienda/test:1.0
+  testing:
+    image: ${WEBAPP_NAME}/test:1.0
     user: webappuser
     working_dir: /opt/webapp
     entrypoint: /bin/bash
     secrets:
       - jasypt-password
     depends_on:
-      - postgreset
-      - keycloaket
+      - postgres
+      - keycloak
     networks:
       - backend
     env_file:
@@ -317,31 +331,33 @@ services:
       - ./docker/scripts/webapp:/opt/webapp/bin
       - ./API:/opt/webapp/API
       - ./application.yml:/opt/webapp/etc/application.yml
-#      - ./userKc:/opt/webapp/src/userKc
     build:
       target: testcontainer
+
+  claude:
+    image: ${WEBAPP_NAME}/claude:2.1.330
+    entrypoint: ["/home/claude/.local/bin/claude"]
+#    command: ["--permission-mode", "plan"]
+    working_dir: /home/claude/${WEBAPP_NAME}
+    env_file:
+      - .env
+      - ./docker/private/claude.env
+    environment:
+      CLAUDE_CONFIG_DIR: /home/claude/.claude
+    build:
+      target: claude
+      args:
+        - ARCHITECTURE=${ARCHITECTURE}
+        - JAVA_VERSION=${JAVA_VERSION}
+    networks:
+      - backend
+    volumes:
+      - ./.claude_config:/home/claude/.claude
+      - ./:/home/claude/${WEBAPP_NAME}
 
 networks:
   backend:
 
 secrets:
-#  db-web-password:
-#    file: private/db-web-password.txt
-#  ldap-password:
-#    file: ./private/ldap-password.txt
   jasypt-password:
     file: docker/private/jasypt-password.txt
-#  db-keycloak-password:
-#    file: ./private/db-keycloak-password.txt
-#  kc-admin-password:
-#    file: ./private/kc-admin-password.txt
-#  kc-frontend-clientId-secret:
-#    file: ./private/kc-frontend-clientId-secret.txt
-#  kc-user-clientId-secret:
-#    file: ./private/kc-user-clientId-secret.txt
-#  webapp-admin-password:
-#    file: ./private/webapp-admin-password.txt
-#  email-smtp-password:
-#    file: ./private/email-smtp-password.txt
-  #db-springsession-password:
-  #  file: private/db-springsession-password.txt
