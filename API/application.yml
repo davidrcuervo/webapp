@@ -66,7 +66,7 @@ api:
         role:
           users: ${api.kc.realm.admin.uri}/roles/{roleName}/users
   kcUser:
-    server: http://etuser:${PORT_USUARIO}
+    server: http://user:${PORT_USUARIO}
     folder: /api/v0/user
 
     # Find current logged user
@@ -114,7 +114,7 @@ api:
       delete: ${api.kcUser.folder}${api.kcUser.file.delete}
   schema:
     port: 8083
-    url: http://etschema:${api.schema.port}
+    url: http://schema:${api.schema.port}
     root: /api/v0/schema
     uri: ${api.schema.url}${api.schema.root}
     helloAll: helloAll
@@ -242,7 +242,7 @@ api:
           add: ${api.schema.uri}${api.schema.group.file.member.add}
           remove: ${api.schema.uri}${api.schema.group.file.member.remove}
   mail:
-    url: http://etmail:${PORT_MESSENGER}
+    url: http://messenger:${PORT_MESSENGER}
     folder: /api/v0/email
     file:
       test: test
@@ -252,7 +252,7 @@ api:
       test: ${api.mail.uri.folder}/${api.mail.file.test}
       send: ${api.mail.uri.folder}/${api.mail.file.send}
   company:
-    url: http://etcompany:${PORT_COMPANY}
+    url: http://company:${PORT_COMPANY}
     folder: /api/v0/company
     uri: ${api.company.url}${api.company.folder}
     create: # METHOD: post | BODY: company | CODE: 200 | RESP: Company.class

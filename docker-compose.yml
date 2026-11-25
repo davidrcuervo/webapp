@@ -38,7 +38,7 @@ services:
         - JAVA_VERSION=${JAVA_VERSION}
 
   keycloak:
-    image: etienda/keycloak:26.8.2
+    image: ${WEBAPP_NAME}/keycloak:26.8.2
     user: keycloak
     working_dir: /opt/keycloak
     entrypoint: /opt/keycloak/kc.entrypoint.sh
@@ -68,7 +68,7 @@ services:
         - JAVA_VERSION=${JAVA_VERSION}
 
   nginx:
-    image: etienda/nginx:1.28
+    image: ${WEBAPP_NAME}/nginx:1.28
 #    user: nginx
     working_dir: /opt/nginx
     entrypoint: ./nginx.entrypoint.sh
@@ -308,14 +308,16 @@ services:
 
   claude:
     image: ${WEBAPP_NAME}/claude:2.1.330
+    init: true
     entrypoint: ["/home/claude/.local/bin/claude"]
-#    command: ["--permission-mode", "plan"]
     working_dir: /home/claude/${WEBAPP_NAME}
     env_file:
       - .env
       - ./docker/private/claude.env
     environment:
       CLAUDE_CONFIG_DIR: /home/claude/.claude
+    secrets:
+      - jasypt-password
     build:
       target: claude
       args:

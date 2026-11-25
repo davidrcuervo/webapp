@@ -46,8 +46,6 @@ Download software to folder ```$APP_ROOT_FOLDER/docker/Software```
 
 ## create passwords
 
-+ [ ] admuser-password.txt
-+ [ ] samsepi0l-password.txt
 + [ ] jasypt-password.txt
 
 ## Edit environmental file ```$APP_ROOT_FOLDER/docker/.env```

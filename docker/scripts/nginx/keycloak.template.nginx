@@ -1,7 +1,7 @@
 # NGINX CONFIGURATION FOR REVERSE PROXY OF KEYCLOAK
 
 upstream keycloak {
-    server keycloaket:${PORT_KEYCLOAK};
+    server keycloak:${PORT_KEYCLOAK};
 }
 
 server {

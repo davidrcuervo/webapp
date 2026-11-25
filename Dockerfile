@@ -144,6 +144,7 @@ WORKDIR /opt/nginx
 
 #copy sites and enable them
 COPY ./docker/scripts/nginx .
+RUN find ./ -type f -name "*.sh" | xargs chmod +x
 RUN find ./ -maxdepth 1 -type f -name "*.sh" | xargs dos2unix
 RUN chmod 740 nginx.entrypoint.sh
 
@@ -171,15 +172,6 @@ RUN rm keycloak-26.8.2.zip
 
 ENV HOME=/opt/keycloak
 ENV PATH="$HOME/keycloak-26.8.2/bin:$PATH"
-
-############################################
-## Keycloak Configuration
-############################################
-FROM keycloaket AS keycloaketcnf
-
-USER root
-
-RUN apt install -y vim
 
 ############################################
 ## MY webapp IMAGE

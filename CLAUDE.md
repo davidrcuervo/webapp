@@ -8,9 +8,21 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Build & Run
 
-All encrypted properties require the Jasypt password, read from `docker/private/jasypt-password.txt` and passed as:
+Building and compiling it is done when docker images are built. For details review @Dockerfile and @docker-compose.yml
+
 ```
--Djasypt.encryptor.password=<password>
+docker compose build postgres
+docker compose build keycloak
+docker compose build nginx
+docker compose build user
+docker compose build schema
+docker compose build messenger
+docker compose build company
+```
+
+All encrypted properties require the Jasypt password, read from environment variable that is passed through docker compose secrets, and it is placed at `/run/secrets/jasypt-password` and passed as:
+```
+-Djasypt.encryptor.password=$(cat /run/secrets/jasypt-password)
 ```
 
 **Build (all modules, skip tests):**
@@ -21,8 +33,7 @@ mvn clean install -DskipTests -Pcontainer -Dcontainer.target.dir=<output_dir>
 **Docker Compose (recommended for development):**
 ```bash
 # Start dependencies first
-docker compose up -d postgreset keycloaket
-docker compose up keycloaketcnf        # Keycloak realm configuration (one-shot)
+docker compose up -d postgres keycloak nginx
 docker compose up -d                   # Start all remaining services
 ```
 
@@ -122,6 +133,8 @@ Required TLS key material must exist under `docker/private/keys/` before startin
 
 | Script | Purpose |
 |--------|---------|
+| `docker/scripts/webapp/test_start_all.sh` | compile, test and start all java modules|
+| `docker/scripts/webapp/test_stop_all.sh` | stop all java modules |
 | `docker/scripts/webapp/compile.sh` | Maven build with `container` profile |
 | `docker/scripts/webapp/test.sh` | Run JUnit tests via JUnit Platform Console |
 | `docker/scripts/webapp/start.sh` | Launch service from compiled JAR |
