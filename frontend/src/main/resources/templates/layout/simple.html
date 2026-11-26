@@ -49,7 +49,8 @@
                     <ul class="dropdown-menu dropdown-menu-end">
                         <li>
                             <a class="dropdown-item"
-                               th:href="${@tt.href('seo.manage.file')}"
+                               th:with="settingsHref=${@tt.href('seo.manage.file')}"
+                               th:href="${settingsHref}"
                             >
                             <i class="bi bi-gear"></i>
                             Settings
@@ -58,7 +59,8 @@
                         <li><hr class="dropdown-divider"></li>
                         <li>
                             <a class="dropdown-item"
-                               th:href="${@tt.href('seo.logout')}">
+                               th:with="logoutHref=${@tt.href('seo.logout')}"
+                               th:href="${logoutHref}">
                             <i class="bi bi-box-arrow-right"></i>
                             Log Out
                             </a>

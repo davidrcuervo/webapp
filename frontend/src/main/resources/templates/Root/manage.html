@@ -17,12 +17,14 @@
                 link='/manage/user/{userId}',
                 alt='Manage user profile'
             )}"></th:block>
-          <th:block th:replace="~{layout/bootstrap.html ::cardWithLinkHover(
+          <th:block th:with="manageAllCompanies=${@tt.href('seo.manage.company.all')}">
+            <th:block th:replace="~{layout/bootstrap.html ::cardWithLinkHover(
                 title='Companies',
                 icon='building-gear',
-                link=${@tt.href('seo.manage.company.all')},
+                link=${manageAllCompanies},
                 alt='Manage companies'
             )}"></th:block>
+          </th:block>
       </div>
   </main>
 </body>
