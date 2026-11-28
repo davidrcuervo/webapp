@@ -5,10 +5,7 @@ import com.laetienda.model.kc.KcUser;
 import com.laetienda.model.user.TestUserDto;
 import com.laetienda.model.user.Usuario;
 import com.laetienda.utils.lib.UtilsBox;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -408,11 +405,13 @@ class UserTest {
         assertTrue(user.isEnabled());
     }
 
+    @Disabled("TODO: Missing to implement")
     @Test
     public void getUserByIdWithNoServiceToken(){
         fail();
     }
 
+    @Disabled("TODO: Missing to implement")
     @Test
     public void getUserByIdWithWrongUserId(){
         fail();

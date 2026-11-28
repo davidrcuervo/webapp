@@ -12,9 +12,9 @@
     <main layout:fragment="content" class="container mb-5">
         <h1 class="text-center">Create new company</h1>
         <form sec:authorize="isAuthenticated()"
-              th:with="user = ${@usr.currentUser}"
+              th:with="user = ${@usr.currentUser}, adminCompanyCreateHref=${@tt.href('seo.manage.company.create')}"
               th:object="${company}"
-              th:action="${@tt.href('seo.manage.company.create')}"
+              th:action="${adminCompanyCreateHref}"
               method="post"
         >
             <!-- Company name -->
@@ -34,20 +34,22 @@
             )}"></th:block>
 
             <!-- Vanity URL -->
-            <th:block th:replace="~{layout/bootstrap.html ::inputWithFeedbackAndResponsive(
-                id = 'createCompanyVanityUrl',
-                type = 'text',
-                label = 'Vanity URL',
-                placeholder = 'How do you want your company to look like on internet.',
-                name = 'vanityUrl',
-                value = *{vanityUrl},
-                options = null,
-                onInputBefore = |${@tt.href('seo.url')}/|,
-                attributes = null,
-                success = null,
-                hasErrors = ${#fields.hasErrors('vanityUrl')},
-                errors = ${#fields.errors('vanityUrl')}
-            )}"></th:block>
+            <th:block th:with="urlPrefix=${@tt.href('seo.url')}">
+                <th:block th:replace="~{layout/bootstrap.html ::inputWithFeedbackAndResponsive(
+                    id = 'createCompanyVanityUrl',
+                    type = 'text',
+                    label = 'Vanity URL',
+                    placeholder = 'How do you want your company to look like on internet.',
+                    name = 'vanityUrl',
+                    value = *{vanityUrl},
+                    options = null,
+                    onInputBefore = |${urlPrefix}/|,
+                    attributes = null,
+                    success = null,
+                    hasErrors = ${#fields.hasErrors('vanityUrl')},
+                    errors = ${#fields.errors('vanityUrl')}
+                )}"></th:block>
+            </th:block>
 
             <!-- Company Owner -->
             <th:block th:replace="~{layout/bootstrap.html ::inputWithFeedbackAndResponsive(
@@ -67,20 +69,22 @@
             <input type="hidden" name="owner" th:value="${user.id}">
 
             <!-- Company policy -->
-            <th:block th:replace="~{layout/bootstrap.html ::inputWithFeedbackAndResponsive(
-                id = 'createCompanyPolicy',
-                type = 'select',
-                label = 'Policy',
-                placeholder = 'Select the policy for new members of the company',
-                value = *{memberPolicy},
-                name = 'memberPolicy',
-                options = ${@comp.allCompanyMemberPolicies},
-                onInputBefore = null,
-                attributes = null,
-                success = null,
-                hasErrors = false,
-                errors = null
-            )}"></th:block>
+            <th:block th:with="memberPolicies=${@comp.allCompanyMemberPolicies}">
+                <th:block th:replace="~{layout/bootstrap.html ::inputWithFeedbackAndResponsive(
+                    id = 'createCompanyPolicy',
+                    type = 'select',
+                    label = 'Policy',
+                    placeholder = 'Select the policy for new members of the company',
+                    value = *{memberPolicy},
+                    name = 'memberPolicy',
+                    options = ${memberPolicies},
+                    onInputBefore = null,
+                    attributes = null,
+                    success = null,
+                    hasErrors = false,
+                    errors = null
+                )}"></th:block>
+            </th:block>/
 
             <!-- Company description -->
             <th:block th:replace="~{layout/bootstrap.html ::inputWithFeedbackAndResponsive(

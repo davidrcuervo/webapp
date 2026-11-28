@@ -12,8 +12,7 @@ function compile() {
   mvn clean install -f "$1/pom.xml" \
   -Djasypt.encryptor.password=$(cat /run/secrets/jasypt-password) \
   -Dspring.config.additional-location=$(pwd)/API/,$(pwd)/ \
-  -Daether.installer.hardLink=false \
-  -Dmaven.test.failure.ignore=true
+  -Daether.installer.hardLink=false
 }
 
 #VARIABLES

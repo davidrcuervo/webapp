@@ -16,7 +16,10 @@
         <div>Name: <span th:text="${user.fullName}">Full Name</span></div>
         <div>Email: <span th:text="${user.email}">email address</span></div>
         <a type="button" class="btn btn-primary"
-           th:href="${@utils.href('api.kc.realm.account')}" alt="edit" title="Edit" target="_blank">
+           alt="edit" title="Edit" target="_blank"
+           th:with="userAccountHref=${@utils.href('api.kc.realm.account')}"
+           th:href="${userAccountHref}"
+        >
            Edit profile
         </a>
     </div>

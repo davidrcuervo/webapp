@@ -13,12 +13,14 @@
 
         <div class="row">
             <th:block th:each="company : ${@comp.managedCompanies}">
-                <th:block th:replace="~{layout/bootstrap.html ::cardWithLinkHover(
-                    title=${company.name},
-                    icon='image',
-                    link=${@tt.href('seo.manage.company.find', company.vanityUrl)},
-                    alt=${company.name}
-                )}"></th:block>
+                <th:block th:with="companyLink=${@tt.href('seo.manage.company.find', company.vanityUrl)}">
+                    <th:block th:replace="~{layout/bootstrap.html ::cardWithLinkHover(
+                        title=${company.name},
+                        icon='image',
+                        link=${companyLink},
+                        alt=${company.name}
+                    )}"></th:block>
+                </th:block>
             </th:block>
             <th:block th:replace="~{layout/bootstrap.html ::cardWithLinkHover(
                 title='Cortes de la Villa',
@@ -32,12 +34,14 @@
                 link='/manage/company/{vanityUrl}',
                 alt='Manage Cafeteros'
             )}"></th:block>
-            <th:block th:replace="~{layout/bootstrap.html ::cardWithLinkHover(
-                title='Create Company',
-                icon='building-add',
-                link=${@tt.href('seo.manage.company.create')},
-                alt='Create new company'
-            )}"></th:block>
+            <th:block th:with="createHref=${@tt.href('seo.manage.company.create')}">
+                <th:block th:replace="~{layout/bootstrap.html ::cardWithLinkHover(
+                    title='Create Company',
+                    icon='building-add',
+                    link=${createHref},
+                    alt='Create new company'
+                )}"></th:block>
+            </th:block>
         </div>
     </main>
 </body>

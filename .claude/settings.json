@@ -1,6 +1,19 @@
 {
   "permissions": {
-    "defaultMode": "plan"
+    "defaultMode": "default",
+    "allow": [
+      "Bash(mvn test *)",
+      "Bash(./docker/scripts/webapp/test.sh *)",
+      "Bash(./docker/scripts/webapp/test_start_all.sh *)",
+      "Bash(./docker/scripts/webapp/test_stop_all.sh *)",
+      "Bash(./docker/scripts/webapp/safestart.sh *)",
+      "Bash(docker compose ps *)"
+    ],
+    "ask": [
+      "Edit",
+      "Write",
+      "NotebookEdit"
+    ]
   },
   "theme": "auto"
 }

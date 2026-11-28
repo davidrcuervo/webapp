@@ -35,9 +35,10 @@
             </div>
 
             <!-- Update Company name -->
-            <form th:action="${@tt.href('seo.manage.company.update.pattern', company.vanityUrl, 'name')}"
-                  method="post"
+            <form method="post"
                   id="companyNameForm"
+                  th:with="updateCompNameHref=${@tt.href('seo.manage.company.update.pattern', company.vanityUrl, 'name')}"
+                  th:action="${updateCompNameHref}"
             >
                 <th:block th:replace="~{layout/bootstrap.html :: inputWithButtonsAndFeedbackAndResponsive(
                     id='companyNameForm',
@@ -58,9 +59,10 @@
             </form>
 
             <!-- Update company vanityUrl -->
-            <form th:action="${@tt.href('seo.manage.company.update.pattern', company.vanityUrl, 'vanityUrl')}"
-                  method="post"
+            <form method="post"
                   id="companyVanityUrlForm"
+                  th:with="updateCompVanityHref=${@tt.href('seo.manage.company.update.pattern', company.vanityUrl, 'vanityUrl')}, vanityUrlPrefix=|${@tt.href('seo.url')}/|"
+                  th:action="${updateCompVanityHref}"
             >
                 <div th:replace="~{layout/bootstrap.html :: inputWithButtonsAndFeedbackAndResponsive(
                     id='companyVanityUrlForm',
@@ -73,7 +75,7 @@
                     options=null,
                     modalTitle='Update Company Vanity URL',
                     modalBody='Are you sure you want to modify your company vanity URL? Users will have to modify their bookmarks, and links on social networks should be updated.',
-                    onInputBefore=|${@tt.href('seo.url')}/|,
+                    onInputBefore=${vanityUrlPrefix},
                     success=${feedback.getSuccess('vanityUrl')},
                     hasErrors=${feedback.hasErrors('vanityUrl')},
                     errors=${feedback.getErrors('vanityUrl')}
@@ -81,9 +83,10 @@
             </form>
 
             <!-- Update owner -->
-            <form th:action="${@tt.href('seo.manage.company.update.pattern', company.vanityUrl, 'owner')}"
-                  method="post"
+            <form method="post"
                   id="companyOwnerForm"
+                  th:with="updateCompOwnerHref=${@tt.href('seo.manage.company.update.pattern', company.vanityUrl, 'owner')}, companyManagers=${@comp.getManagers(company)}"
+                  th:action="${updateCompOwnerHref}"
             >
                 <th:block th:replace="~{layout/bootstrap.html :: inputWithButtonsAndFeedbackAndResponsive(
                     id='companyOwnerForm',
@@ -93,7 +96,7 @@
                     placeholder='Select the owner of the company.',
                     name='owner',
                     value=${company.owner},
-                    options=${@comp.getManagers(company)},
+                    options=${companyManagers},
                     modalTitle='Update Company Owner',
                     modalBody='Are you sure you want other person the owns the company? You can not undo this modification, only owner can modify the owner.',
                     onInputBefore=null,
@@ -104,9 +107,10 @@
             </form>
 
             <!-- Update Member policy -->
-            <form th:action="${@tt.href('seo.manage.company.update.pattern', company.vanityUrl, 'memberPolicy')}"
-                  method="post"
+            <form method="post"
                   id="companyPolicyForm"
+                  th:with="updateMemberPolicyHref=${@tt.href('seo.manage.company.update.pattern', company.vanityUrl, 'memberPolicy')}, companyMemberPolicies=${@comp.allCompanyMemberPolicies}"
+                  th:action="${updateMemberPolicyHref}"
             >
                 <th:block th:replace="~{layout/bootstrap.html ::inputWithSaveButtonAndFeedbackAndResponsive(
                     id = 'companyPolicyForm',
@@ -116,7 +120,7 @@
                     placeholder = 'Select the policy for new members of the company',
                     name='memberPolicy',
                     value = ${company.memberPolicy.name()},
-                    options = ${@comp.allCompanyMemberPolicies},
+                    options = ${companyMemberPolicies},
                     onInputBefore = null,
                     attributes = null,
                     success = ${feedback.getSuccess('memberPolicy')},
@@ -126,9 +130,10 @@
             </form>
 
             <!-- Update description -->
-            <form th:action="${@tt.href('seo.manage.company.update.pattern', company.vanityUrl, 'description')}"
-                  method="post"
+            <form method="post"
                   id="updateCompanyDescriptionForm"
+                  th:with="updateCompDescriptionHref=${@tt.href('seo.manage.company.update.pattern', company.vanityUrl, 'description')}"
+                  th:action="${updateCompDescriptionHref}"
             >
                 <th:block th:replace="~{layout/bootstrap.html ::inputWithSaveButtonAndFeedbackAndResponsive(
                     id='updateCompanyDescriptionForm',
@@ -162,9 +167,10 @@
                 >
                     <td th:text="${user.fullName}">Member Name</td>
                     <td class="text-center">
-                        <form th:action="${@tt.href('seo.manage.company.update.member', company.vanityUrl, 'manager', user.id)}"
-                              method="post"
+                        <form method="post"
                               class="checkBoxWithModal"
+                              th:with="toggleCompManager=${@tt.href('seo.manage.company.update.member', company.vanityUrl, 'manager', user.id)}, isCompanyManager=${@comp.isManager(company, user.id)}"
+                              th:action="${toggleCompManager}"
                         >
                             <th:block th:replace="~{layout/bootstrap.html :: inputWithFeedback(
                                 id = |${user.id}ManagerCheckBoxInput|,
@@ -174,7 +180,7 @@
                                 name = 'managerUserId',
                                 value = ${user.id},
                                 options = null,
-                                attributes = ${ {@comp.isManager(company, user.id) ? 'checked' : null} },
+                                attributes = ${ {isCompanyManager ? 'checked' : null} },
                                 success = ${feedback.getSuccess('manager_' + user.id)},
                                 hasErrors = ${feedback.hasErrors('manager_' + user.id)},
                                 errors = ${feedback.getErrors('manager_' + user.id)}
@@ -187,9 +193,10 @@
                         </form>
                     </td>
                     <td class="text-center">
-                        <form th:action="${@tt.href('seo.manage.company.update.member', company.vanityUrl, 'member', user.id)}"
-                              method="post"
+                        <form method="post"
                               class="checkBoxWithModal"
+                              th:with="toggleCompMember=${@tt.href('seo.manage.company.update.member', company.vanityUrl, 'member', user.id)}, isCompanyMemberAccepted=${@comp.isAccepted(company, user.id)}"
+                              th:action="${toggleCompMember}"
                         >
                             <th:block th:replace="~{layout/bootstrap.html :: inputWithFeedback(
                                 id = |${user.id}AcceptMemberCheckBox|,
@@ -199,7 +206,7 @@
                                 name = 'memberUserId',
                                 value = ${user.id},
                                 options = null,
-                                attributes = ${ {@comp.isAccepted(company, user.id) ? 'checked' : null} },
+                                attributes = ${ {isCompanyMemberAccepted ? 'checked' : null} },
                                 success = ${feedback.getSuccess('member_' + user.id)},
                                 hasErrors = ${feedback.hasErrors('member_' + user.id)},
                                 errors = ${feedback.getErrors('member_' + user.id)}

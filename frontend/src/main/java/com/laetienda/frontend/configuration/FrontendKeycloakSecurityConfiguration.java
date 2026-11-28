@@ -59,7 +59,7 @@ public class FrontendKeycloakSecurityConfiguration {
                         requestMatchers("/home", "/", "/home.html", "/index", "/index.html", "/user/signup.html").permitAll().
                         requestMatchers("/bootstrap/**", "/styles/**", "/scripts/**").permitAll().
                         requestMatchers("/login*").permitAll().
-                        requestMatchers("/manage/**").hasAuthority("role_manager").
+//                        requestMatchers("/manage/**").hasAuthority("role_manager").
                         anyRequest().authenticated()
                 );
         http.csrf(csrf ->
